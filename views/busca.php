@@ -1,0 +1,254 @@
+<?php
+require_once __DIR__ . '/../config.php';
+
+$pageTitle = 'Buscar Pets - PetFinder';
+
+$buscaController = new BuscaController();
+$params = $_GET;
+$resultado = $buscaController->listar($params);
+
+$anuncios = $resultado['anuncios'];
+$filters = $resultado['filters'];
+$page = $resultado['page'];
+
+include __DIR__ . '/../includes/header.php';
+?>
+
+<div class="container py-5">
+    <div class="row g-4">
+        <div class="col-lg-3">
+            <div class="card shadow-sm border-0 sticky-top" style="top: 100px;">
+                <div class="card-body">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-funnel me-2"></i>Filtros Rápidos</h5>
+                    <form method="GET" action="" id="filtrosBusca">
+                        <div class="mb-3">
+                            <label class="form-label">Palavra-chave</label>
+                            <input type="text" name="q" class="form-control" placeholder="Ex: labrador preto" value="<?php echo sanitize($params['q'] ?? ''); ?>">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Tipo</label>
+                            <select name="tipo" class="form-select">
+                                <option value="">Todos</option>
+                                <option value="perdido" <?php echo (($filters['tipo'] ?? '') === 'perdido') ? 'selected' : ''; ?>>🔴 Perdidos</option>
+                                <option value="encontrado" <?php echo (($filters['tipo'] ?? '') === 'encontrado') ? 'selected' : ''; ?>>🟢 Encontrados</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Espécie</label>
+                            <select name="especie" class="form-select">
+                                <option value="">Todas</option>
+                                <option value="cachorro" <?php echo (($filters['especie'] ?? '') === 'cachorro') ? 'selected' : ''; ?>>🐕 Cachorro</option>
+                                <option value="gato" <?php echo (($filters['especie'] ?? '') === 'gato') ? 'selected' : ''; ?>>🐈 Gato</option>
+                                <option value="ave" <?php echo (($filters['especie'] ?? '') === 'ave') ? 'selected' : ''; ?>>🦜 Ave</option>
+                                <option value="outro" <?php echo (($filters['especie'] ?? '') === 'outro') ? 'selected' : ''; ?>>🐾 Outro</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Estado (UF)</label>
+                            <input type="text" name="estado" maxlength="2" class="form-control text-uppercase" value="<?php echo sanitize($params['estado'] ?? ''); ?>">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Cidade</label>
+                            <input type="text" name="cidade" class="form-control" value="<?php echo sanitize($params['cidade'] ?? ''); ?>">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Bairro</label>
+                            <input type="text" name="bairro" class="form-control" value="<?php echo sanitize($params['bairro'] ?? ''); ?>">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Ordenar por</label>
+                            <select name="ordenacao" class="form-select">
+                                <option value="">Mais recentes</option>
+                                <option value="antigo" <?php echo (($filters['ordenacao'] ?? '') === 'antigo') ? 'selected' : ''; ?>>Mais antigos</option>
+                                <option value="popular" <?php echo (($filters['ordenacao'] ?? '') === 'popular') ? 'selected' : ''; ?>>Mais populares</option>
+                                <option value="proximo" <?php echo (($filters['ordenacao'] ?? '') === 'proximo') ? 'selected' : ''; ?>>Mais próximos</option>
+                            </select>
+                        </div>
+
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" value="1" id="comFoto" name="has_photo" <?php echo isset($filters['has_photo']) ? 'checked' : ''; ?>>
+                            <label class="form-check-label" for="comFoto">
+                                Apenas anúncios com foto
+                            </label>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label d-flex justify-content-between align-items-center">
+                                <span>Raio de busca</span>
+                                <button class="btn btn-link btn-sm p-0" type="button" onclick="usarMinhaPosicao()"><i class="bi bi-crosshair me-1"></i>Perto de mim</button>
+                            </label>
+                            <input type="hidden" name="lat" id="lat" value="<?php echo sanitize($params['lat'] ?? ''); ?>">
+                            <input type="hidden" name="lng" id="lng" value="<?php echo sanitize($params['lng'] ?? ''); ?>">
+                            <select name="raio" class="form-select">
+                                <option value="">Qualquer distância</option>
+                                <?php foreach ([5,10,20,50] as $raio): ?>
+                                    <option value="<?php echo $raio; ?>" <?php echo (($filters['raio'] ?? '') == $raio) ? 'selected' : ''; ?>><?php echo $raio; ?> km</option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary"><i class="bi bi-search me-1"></i>Aplicar filtros</button>
+                            <a href="<?php echo BASE_URL; ?>/busca.php" class="btn btn-outline-secondary">Limpar filtros</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-9">
+            <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-3">
+                <div>
+                    <h1 class="h3 fw-bold mb-0">Resultados da busca</h1>
+                    <p class="text-muted mb-0">Encontramos <strong><?php echo count($anuncios); ?></strong> anúncios nesta página.</p>
+                </div>
+                <div class="mt-3 mt-md-0">
+                    <div class="btn-group" role="group">
+                        <a href="?<?php echo http_build_query(array_merge($params, ['ordenacao' => ''])); ?>" class="btn btn-outline-primary <?php echo empty($filters['ordenacao']) ? 'active' : ''; ?>">Recentes</a>
+                        <a href="?<?php echo http_build_query(array_merge($params, ['ordenacao' => 'proximo'])); ?>" class="btn btn-outline-primary <?php echo (($filters['ordenacao'] ?? '') === 'proximo') ? 'active' : ''; ?>">Mais próximos</a>
+                        <a href="?<?php echo http_build_query(array_merge($params, ['ordenacao' => 'popular'])); ?>" class="btn btn-outline-primary <?php echo (($filters['ordenacao'] ?? '') === 'popular') ? 'active' : ''; ?>">Populares</a>
+                    </div>
+                </div>
+            </div>
+
+            <?php if (empty($anuncios)): ?>
+                <div class="alert alert-info">
+                    <h5 class="fw-bold"><i class="bi bi-emoji-neutral me-2"></i>Nenhum anúncio encontrado</h5>
+                    <p class="mb-2">Tente ajustar os filtros ou pesquisar por termos diferentes.</p>
+                    <ul class="mb-0 small text-muted">
+                        <li>Verifique se a grafia está correta</li>
+                        <li>Experimente ampliar o raio de busca</li>
+                        <li>Selecione "Todos" em espécie ou tipo</li>
+                    </ul>
+                </div>
+            <?php else: ?>
+                <div class="row g-4">
+                    <?php foreach ($anuncios as $anuncio): ?>
+                        <div class="col-md-6 col-lg-4">
+                            <div class="card anuncio-card h-100" onclick="window.location='<?php echo BASE_URL; ?>/anuncio.php?id=<?php echo $anuncio['id']; ?>'">
+                                <div class="position-relative">
+                                    <?php if (!empty($anuncio['foto'])): ?>
+                                        <img src="<?php echo BASE_URL; ?>/uploads/anuncios/<?php echo sanitize($anuncio['foto']); ?>" class="card-img-top" alt="Foto do pet">
+                                    <?php else: ?>
+                                        <div class="card-img-top d-flex align-items-center justify-content-center bg-light text-muted" style="height: 200px;">
+                                            <div class="text-center">
+                                                <i class="bi bi-camera" style="font-size: 2.5rem;"></i>
+                                                <p class="mb-0 mt-2">Sem foto</p>
+                                            </div>
+                                        </div>
+                                    <?php endif; ?>
+                                    <span class="badge tipo-badge <?php echo $anuncio['tipo'] === 'perdido' ? 'bg-danger' : 'bg-success'; ?>">
+                                        <?php echo $anuncio['tipo'] === 'perdido' ? '🔴 Perdido' : '🟢 Encontrado'; ?>
+                                    </span>
+                                </div>
+                                <div class="card-body">
+                                    <h5 class="card-title fw-bold mb-2"><?php echo sanitize($anuncio['nome_pet'] ?: 'Pet ' . ucfirst($anuncio['especie'])); ?></h5>
+                                    <div class="d-flex flex-wrap gap-2 mb-2">
+                                        <span class="badge bg-light text-dark"><i class="bi bi-geo-alt me-1"></i><?php echo sanitize($anuncio['bairro']); ?></span>
+                                        <span class="badge bg-light text-dark"><?php echo ucfirst($anuncio['especie']); ?></span>
+                                        <span class="badge bg-light text-dark"><?php echo ucfirst($anuncio['tamanho']); ?></span>
+                                    </div>
+                                    <p class="text-muted small mb-2">
+                                        <?php echo sanitize(truncate($anuncio['descricao'] ?? '', 80)); ?>
+                                    </p>
+                                </div>
+                                <div class="card-footer bg-white border-0 d-flex justify-content-between align-items-center">
+                                    <span class="text-muted small"><i class="bi bi-clock me-1"></i><?php echo timeAgo($anuncio['data_publicacao']); ?></span>
+                                    <a href="<?php echo BASE_URL; ?>/anuncio.php?id=<?php echo $anuncio['id']; ?>" class="btn btn-sm btn-outline-primary">Ver detalhes</a>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+
+                <nav class="mt-4" aria-label="Paginação de resultados">
+                    <ul class="pagination justify-content-center">
+                        <?php $prevPage = max(1, $page - 1); ?>
+                        <li class="page-item <?php echo $page === 1 ? 'disabled' : ''; ?>">
+                            <a class="page-link" href="?<?php echo http_build_query(array_merge($params, ['page' => $prevPage])); ?>" tabindex="-1">Anterior</a>
+                        </li>
+                        <li class="page-item active"><span class="page-link"><?php echo $page; ?></span></li>
+                        <?php $nextPage = $page + 1; ?>
+                        <li class="page-item <?php echo count($anuncios) < RESULTS_PER_PAGE ? 'disabled' : ''; ?>">
+                            <a class="page-link" href="?<?php echo http_build_query(array_merge($params, ['page' => $nextPage])); ?>">Próxima</a>
+                        </li>
+                    </ul>
+                </nav>
+            <?php endif; ?>
+        </div>
+    </div>
+</div>
+
+<style>
+.anuncio-card {
+    border: none;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+    transition: transform .2s ease, box-shadow .2s ease;
+    cursor: pointer;
+}
+
+.anuncio-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+}
+
+.anuncio-card img {
+    height: 200px;
+    object-fit: cover;
+}
+
+.tipo-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    padding: 0.4rem 0.75rem;
+    font-weight: 600;
+    border-radius: 999px;
+}
+
+.card-footer .btn {
+    border-radius: 999px;
+}
+
+#filtrosBusca select, #filtrosBusca input {
+    border-radius: 10px;
+}
+
+.btn-outline-primary.active {
+    color: #fff;
+    background-color: #2196F3;
+    border-color: #2196F3;
+}
+</style>
+
+<script>
+function usarMinhaPosicao() {
+    if (!navigator.geolocation) {
+        alert('Seu navegador não suporta geolocalização.');
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(function(position) {
+        document.getElementById('lat').value = position.coords.latitude;
+        document.getElementById('lng').value = position.coords.longitude;
+        document.querySelector('select[name="raio"]').value = document.querySelector('select[name="raio"]').value || '10';
+        document.getElementById('filtrosBusca').submit();
+    }, function() {
+        alert('Não foi possível obter sua localização.');
+    });
+}
+
+function usarMinhaPosicaoHome(lat, lng) {
+    document.getElementById('lat').value = lat;
+    document.getElementById('lng').value = lng;
+    document.getElementById('filtrosBusca').submit();
+}
+</script>
+
+<?php include __DIR__ . '/../includes/footer.php'; ?>

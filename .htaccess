@@ -1,0 +1,46 @@
+# PetFinder - Apache Configuration
+RewriteEngine On
+RewriteBase /petfinder/
+
+# Redirecionar para HTTPS (produção)
+# RewriteCond %{HTTPS} off
+# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Remover .php das URLs
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^([^.]+)$ $1.php [NC,L]
+
+# Redirecionar URLs amigáveis para views/
+RewriteRule ^busca/?$ views/busca.php [L]
+RewriteRule ^novo-anuncio/?$ views/novo-anuncio.php [L]
+RewriteRule ^doar/?$ views/doar.php [L]
+RewriteRule ^cadastro/?$ views/cadastro.php [L]
+RewriteRule ^login/?$ views/login.php [L]
+RewriteRule ^perfil/?$ views/perfil.php [L]
+RewriteRule ^favoritos/?$ views/favoritos.php [L]
+RewriteRule ^alertas/?$ views/alertas.php [L]
+RewriteRule ^anuncio/?$ views/anuncio-detalhes.php [L]
+RewriteRule ^meus-anuncios/?$ views/meus-anuncios.php [L]
+RewriteRule ^logout/?$ views/logout.php [L]
+
+# Proteger diretórios
+<Files config.php>
+    Order allow,deny
+    Deny from all
+</Files>
+
+# Cache de assets
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpg "access plus 1 year"
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType text/css "access plus 1 year"
+    ExpiresByType text/javascript "access plus 1 year"
+</IfModule>
+
+# Compressão
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css text/javascript application/javascript
+</IfModule>
