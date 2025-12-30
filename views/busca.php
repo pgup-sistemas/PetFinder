@@ -11,6 +11,23 @@ $anuncios = $resultado['anuncios'];
 $filters = $resultado['filters'];
 $page = $resultado['page'];
 
+$mapPoints = [];
+foreach ($anuncios as $anuncio) {
+    if (!empty($anuncio['latitude']) && !empty($anuncio['longitude'])) {
+        $mapPoints[] = [
+            'id' => (int)$anuncio['id'],
+            'tipo' => (string)($anuncio['tipo'] ?? ''),
+            'especie' => (string)($anuncio['especie'] ?? ''),
+            'nome' => (string)($anuncio['nome_pet'] ?: ('Pet ' . ucfirst((string)($anuncio['especie'] ?? '')))),
+            'bairro' => (string)($anuncio['bairro'] ?? ''),
+            'cidade' => (string)($anuncio['cidade'] ?? ''),
+            'foto' => !empty($anuncio['foto']) ? (string)$anuncio['foto'] : null,
+            'lat' => (float)$anuncio['latitude'],
+            'lng' => (float)$anuncio['longitude'],
+        ];
+    }
+}
+
 include __DIR__ . '/../includes/header.php';
 ?>
 
@@ -117,70 +134,101 @@ include __DIR__ . '/../includes/header.php';
                 </div>
             </div>
 
-            <?php if (empty($anuncios)): ?>
-                <div class="alert alert-info">
-                    <h5 class="fw-bold"><i class="bi bi-emoji-neutral me-2"></i>Nenhum anúncio encontrado</h5>
-                    <p class="mb-2">Tente ajustar os filtros ou pesquisar por termos diferentes.</p>
-                    <ul class="mb-0 small text-muted">
-                        <li>Verifique se a grafia está correta</li>
-                        <li>Experimente ampliar o raio de busca</li>
-                        <li>Selecione "Todos" em espécie ou tipo</li>
-                    </ul>
-                </div>
-            <?php else: ?>
-                <div class="row g-4">
-                    <?php foreach ($anuncios as $anuncio): ?>
-                        <div class="col-md-6 col-lg-4">
-                            <div class="card anuncio-card h-100" onclick="window.location='<?php echo BASE_URL; ?>/anuncio.php?id=<?php echo $anuncio['id']; ?>'">
-                                <div class="position-relative">
-                                    <?php if (!empty($anuncio['foto'])): ?>
-                                        <img src="<?php echo BASE_URL; ?>/uploads/anuncios/<?php echo sanitize($anuncio['foto']); ?>" class="card-img-top" alt="Foto do pet">
-                                    <?php else: ?>
-                                        <div class="card-img-top d-flex align-items-center justify-content-center bg-light text-muted" style="height: 200px;">
-                                            <div class="text-center">
-                                                <i class="bi bi-camera" style="font-size: 2.5rem;"></i>
-                                                <p class="mb-0 mt-2">Sem foto</p>
-                                            </div>
+            <ul class="nav nav-tabs mb-3" id="buscaTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="tab-lista" data-bs-toggle="tab" data-bs-target="#pane-lista" type="button" role="tab" aria-controls="pane-lista" aria-selected="true">Lista</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tab-mapa" data-bs-toggle="tab" data-bs-target="#pane-mapa" type="button" role="tab" aria-controls="pane-mapa" aria-selected="false">Mapa</button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="buscaTabsContent">
+                <div class="tab-pane fade show active" id="pane-lista" role="tabpanel" aria-labelledby="tab-lista" tabindex="0">
+
+                    <?php if (empty($anuncios)): ?>
+                        <div class="alert alert-info">
+                            <h5 class="fw-bold"><i class="bi bi-emoji-neutral me-2"></i>Nenhum anúncio encontrado</h5>
+                            <p class="mb-2">Tente ajustar os filtros ou pesquisar por termos diferentes.</p>
+                            <ul class="mb-0 small text-muted">
+                                <li>Verifique se a grafia está correta</li>
+                                <li>Experimente ampliar o raio de busca</li>
+                                <li>Selecione "Todos" em espécie ou tipo</li>
+                            </ul>
+                        </div>
+                    <?php else: ?>
+                        <div class="row g-4">
+                            <?php foreach ($anuncios as $anuncio): ?>
+                                <div class="col-md-6 col-lg-4">
+                                    <div class="card anuncio-card h-100" onclick="window.location='<?php echo BASE_URL; ?>/anuncio.php?id=<?php echo $anuncio['id']; ?>'">
+                                        <div class="position-relative">
+                                            <?php if (!empty($anuncio['foto'])): ?>
+                                                <img src="<?php echo BASE_URL; ?>/uploads/anuncios/<?php echo sanitize($anuncio['foto']); ?>" class="card-img-top" alt="Foto do pet">
+                                            <?php else: ?>
+                                                <div class="card-img-top d-flex align-items-center justify-content-center bg-light text-muted" style="height: 200px;">
+                                                    <div class="text-center">
+                                                        <i class="bi bi-camera" style="font-size: 2.5rem;"></i>
+                                                        <p class="mb-0 mt-2">Sem foto</p>
+                                                    </div>
+                                                </div>
+                                            <?php endif; ?>
+                                            <span class="badge tipo-badge <?php echo $anuncio['tipo'] === 'perdido' ? 'bg-danger' : 'bg-success'; ?>">
+                                                <?php echo $anuncio['tipo'] === 'perdido' ? ' Perdido' : ' Encontrado'; ?>
+                                            </span>
                                         </div>
-                                    <?php endif; ?>
-                                    <span class="badge tipo-badge <?php echo $anuncio['tipo'] === 'perdido' ? 'bg-danger' : 'bg-success'; ?>">
-                                        <?php echo $anuncio['tipo'] === 'perdido' ? '🔴 Perdido' : '🟢 Encontrado'; ?>
-                                    </span>
-                                </div>
-                                <div class="card-body">
-                                    <h5 class="card-title fw-bold mb-2"><?php echo sanitize($anuncio['nome_pet'] ?: 'Pet ' . ucfirst($anuncio['especie'])); ?></h5>
-                                    <div class="d-flex flex-wrap gap-2 mb-2">
-                                        <span class="badge bg-light text-dark"><i class="bi bi-geo-alt me-1"></i><?php echo sanitize($anuncio['bairro']); ?></span>
-                                        <span class="badge bg-light text-dark"><?php echo ucfirst($anuncio['especie']); ?></span>
-                                        <span class="badge bg-light text-dark"><?php echo ucfirst($anuncio['tamanho']); ?></span>
+                                        <div class="card-body">
+                                            <h5 class="card-title fw-bold mb-2"><?php echo sanitize($anuncio['nome_pet'] ?: 'Pet ' . ucfirst($anuncio['especie'])); ?></h5>
+                                            <div class="d-flex flex-wrap gap-2 mb-2">
+                                                <span class="badge bg-light text-dark"><i class="bi bi-geo-alt me-1"></i><?php echo sanitize($anuncio['bairro']); ?></span>
+                                                <span class="badge bg-light text-dark"><?php echo ucfirst($anuncio['especie']); ?></span>
+                                                <span class="badge bg-light text-dark"><?php echo ucfirst($anuncio['tamanho']); ?></span>
+                                            </div>
+                                            <p class="text-muted small mb-2">
+                                                <?php echo sanitize(truncate($anuncio['descricao'] ?? '', 80)); ?>
+                                            </p>
+                                        </div>
+                                        <div class="card-footer bg-white border-0 d-flex justify-content-between align-items-center">
+                                            <span class="text-muted small"><i class="bi bi-clock me-1"></i><?php echo timeAgo($anuncio['data_publicacao']); ?></span>
+                                            <a href="<?php echo BASE_URL; ?>/anuncio.php?id=<?php echo $anuncio['id']; ?>" class="btn btn-sm btn-outline-primary">Ver detalhes</a>
+                                        </div>
                                     </div>
-                                    <p class="text-muted small mb-2">
-                                        <?php echo sanitize(truncate($anuncio['descricao'] ?? '', 80)); ?>
-                                    </p>
                                 </div>
-                                <div class="card-footer bg-white border-0 d-flex justify-content-between align-items-center">
-                                    <span class="text-muted small"><i class="bi bi-clock me-1"></i><?php echo timeAgo($anuncio['data_publicacao']); ?></span>
-                                    <a href="<?php echo BASE_URL; ?>/anuncio.php?id=<?php echo $anuncio['id']; ?>" class="btn btn-sm btn-outline-primary">Ver detalhes</a>
+                            <?php endforeach; ?>
+                        </div>
+
+                        <nav class="mt-4" aria-label="Paginação de resultados">
+                            <ul class="pagination justify-content-center">
+                                <?php $prevPage = max(1, $page - 1); ?>
+                                <li class="page-item <?php echo $page === 1 ? 'disabled' : ''; ?>">
+                                    <a class="page-link" href="?<?php echo http_build_query(array_merge($params, ['page' => $prevPage])); ?>" tabindex="-1">Anterior</a>
+                                </li>
+                                <li class="page-item active"><span class="page-link"><?php echo $page; ?></span></li>
+                                <?php $nextPage = $page + 1; ?>
+                                <li class="page-item <?php echo count($anuncios) < RESULTS_PER_PAGE ? 'disabled' : ''; ?>">
+                                    <a class="page-link" href="?<?php echo http_build_query(array_merge($params, ['page' => $nextPage])); ?>">Próxima</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    <?php endif; ?>
+                </div>
+
+                <div class="tab-pane fade" id="pane-mapa" role="tabpanel" aria-labelledby="tab-mapa" tabindex="0">
+                    <?php if (empty($mapPoints)): ?>
+                        <div class="alert alert-info">
+                            Nenhum anúncio com coordenadas para exibir no mapa nesta página.
+                        </div>
+                    <?php else: ?>
+                        <div class="card shadow-sm border-0">
+                            <div class="card-body">
+                                <div id="mapBusca" style="height: 520px; border-radius: 12px; overflow: hidden;"></div>
+                                <div class="small text-muted mt-2">
+                                    Dica: aplique o filtro de raio e use “Perto de mim” para ver anúncios próximos.
                                 </div>
                             </div>
                         </div>
-                    <?php endforeach; ?>
+                    <?php endif; ?>
                 </div>
-
-                <nav class="mt-4" aria-label="Paginação de resultados">
-                    <ul class="pagination justify-content-center">
-                        <?php $prevPage = max(1, $page - 1); ?>
-                        <li class="page-item <?php echo $page === 1 ? 'disabled' : ''; ?>">
-                            <a class="page-link" href="?<?php echo http_build_query(array_merge($params, ['page' => $prevPage])); ?>" tabindex="-1">Anterior</a>
-                        </li>
-                        <li class="page-item active"><span class="page-link"><?php echo $page; ?></span></li>
-                        <?php $nextPage = $page + 1; ?>
-                        <li class="page-item <?php echo count($anuncios) < RESULTS_PER_PAGE ? 'disabled' : ''; ?>">
-                            <a class="page-link" href="?<?php echo http_build_query(array_merge($params, ['page' => $nextPage])); ?>">Próxima</a>
-                        </li>
-                    </ul>
-                </nav>
-            <?php endif; ?>
+            </div>
         </div>
     </div>
 </div>
@@ -228,6 +276,97 @@ include __DIR__ . '/../includes/header.php';
 </style>
 
 <script>
+let __petfinderBuscaMapInitialized = false;
+
+function initBuscaMap() {
+    if (__petfinderBuscaMapInitialized) return;
+
+    const mapEl = document.getElementById('mapBusca');
+    if (!mapEl || !window.L) return;
+
+    __petfinderBuscaMapInitialized = true;
+
+    const points = <?php echo json_encode($mapPoints, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+    const filtroLat = Number(<?php echo json_encode($params['lat'] ?? ''); ?>);
+    const filtroLng = Number(<?php echo json_encode($params['lng'] ?? ''); ?>);
+    const filtroRaio = Number(<?php echo json_encode($filters['raio'] ?? ''); ?>);
+
+    let centerLat = -10.9472;
+    let centerLng = -61.9327;
+    let zoom = 12;
+
+    if (Number.isFinite(filtroLat) && Number.isFinite(filtroLng)) {
+        centerLat = filtroLat;
+        centerLng = filtroLng;
+        zoom = 13;
+    } else if (points.length) {
+        centerLat = points[0].lat;
+        centerLng = points[0].lng;
+        zoom = 12;
+    }
+
+    const map = L.map('mapBusca', {
+        center: [centerLat, centerLng],
+        zoom,
+        scrollWheelZoom: false,
+    });
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap'
+    }).addTo(map);
+
+    const bounds = [];
+
+    points.forEach(function (p) {
+        const url = <?php echo json_encode(BASE_URL . '/anuncio.php?id='); ?> + p.id;
+        const titulo = String(p.nome || 'Pet');
+        const local = [p.bairro, p.cidade].filter(Boolean).join(' - ');
+        const fotoHtml = p.foto
+            ? '<div class="mb-2"><img src="<?php echo BASE_URL; ?>/uploads/anuncios/' + p.foto + '" style="width: 180px; max-width: 100%; height: 110px; object-fit: cover; border-radius: 10px;" /></div>'
+            : '';
+
+        const marker = L.marker([p.lat, p.lng]).addTo(map);
+        marker.bindPopup(
+            '<div style="max-width: 220px;">'
+                + fotoHtml
+                + '<div style="font-weight: 600; margin-bottom: 4px;">' + titulo + '</div>'
+                + '<div style="font-size: 12px; color: #666; margin-bottom: 8px;">' + local + '</div>'
+                + '<a href="' + url + '" class="btn btn-sm btn-primary">Ver anúncio</a>'
+            + '</div>'
+        );
+
+        bounds.push([p.lat, p.lng]);
+    });
+
+    let circle = null;
+    if (Number.isFinite(filtroLat) && Number.isFinite(filtroLng) && Number.isFinite(filtroRaio) && filtroRaio > 0) {
+        circle = L.circle([filtroLat, filtroLng], {
+            radius: filtroRaio * 1000,
+            color: '#0d6efd',
+            weight: 2,
+            fillColor: '#0d6efd',
+            fillOpacity: 0.08
+        }).addTo(map);
+    }
+
+    if (bounds.length) {
+        const leafletBounds = L.latLngBounds(bounds);
+        if (circle) {
+            leafletBounds.extend(circle.getBounds());
+        }
+        map.fitBounds(leafletBounds.pad(0.2));
+    }
+
+    setTimeout(function () {
+        map.invalidateSize();
+    }, 50);
+}
+
+document.getElementById('tab-mapa')?.addEventListener('shown.bs.tab', function () {
+    initBuscaMap();
+});
+
 function usarMinhaPosicao() {
     if (!navigator.geolocation) {
         alert('Seu navegador não suporta geolocalização.');

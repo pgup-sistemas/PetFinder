@@ -22,6 +22,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $successMessage = 'Se o e-mail estiver cadastrado, enviaremos um link para redefinir sua senha.';
         } elseif (!empty($result['errors'])) {
             $errors = $result['errors'];
+        } elseif (!empty($result['error'])) {
+            $errors[] = $result['error'];
         }
     }
 }

@@ -1,0 +1,401 @@
+/* Estilos Gerais para Páginas Estáticas */
+:root {
+    --verde-primario: #2e7d32; /* Verde folha mais escuro */
+    --verde-secundario: #388e3c; /* Verde folha */
+    --verde-claro: #81c784; /* Verde folha claro */
+    --verde-muito-claro: #e8f5e9; /* Verde folha muito claro para fundos */
+    --cinza-escuro: #2c3e50;
+    --cinza-claro: #f8f9fa;
+    --branco: #ffffff;
+    --sombra: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Estilo da Página */
+.pagina-estatica {
+    background-color: var(--verde-muito-claro);
+    padding: 2rem 0;
+    min-height: calc(100vh - 200px); /* Ajuste conforme o tamanho do seu header/footer */
+}
+
+.conteudo-pagina {
+    background-color: var(--branco);
+    border-radius: 10px;
+    box-shadow: var(--sombra);
+    padding: 2.5rem;
+    margin-bottom: 2rem;
+}
+
+/* Cabeçalho da Página */
+.cabecalho-pagina {
+    text-align: center;
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 2px solid var(--verde-claro);
+}
+
+.cabecalho-pagina h1 {
+    color: var(--verde-primario);
+    font-weight: 700;
+    margin-bottom: 1rem;
+    position: relative;
+    display: inline-block;
+}
+
+.cabecalho-pagina h1:after {
+    content: '';
+    display: block;
+    width: 80px;
+    height: 4px;
+    background: var(--verde-secundario);
+    margin: 15px auto 0;
+    border-radius: 2px;
+}
+
+/* Seções */
+.secao {
+    margin-bottom: 2.5rem;
+}
+
+.secao h2 {
+    color: var(--verde-primario);
+    font-size: 1.75rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e0e0e0;
+    position: relative;
+}
+
+.secao h2:after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 80px;
+    height: 3px;
+    background: var(--verde-secundario);
+}
+
+.secao h3 {
+    color: var(--verde-secundario);
+    font-size: 1.4rem;
+    margin: 1.5rem 0 1rem;
+}
+
+/* Listas */
+.lista-estilizada {
+    padding-left: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.lista-estilizada li {
+    margin-bottom: 0.75rem;
+    line-height: 1.6;
+    color: #444;
+}
+
+/* Tabelas */
+.tabela-responsiva {
+    width: 100%;
+    overflow-x: auto;
+    margin: 1.5rem 0;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-size: 0.95rem;
+}
+
+th, td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+th {
+    background-color: var(--verde-primario);
+    color: white;
+    font-weight: 600;
+}
+
+tr:nth-child(even) {
+    background-color: var(--verde-muito-claro);
+}
+
+tr:hover {
+    background-color: rgba(46, 125, 50, 0.1);
+}
+
+/* Links */
+a {
+    color: var(--verde-primario);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+a:hover {
+    color: var(--verde-secundario);
+    text-decoration: underline;
+}
+
+/* Botões */
+.botao-verde {
+    background-color: var(--verde-secundario);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-block;
+    text-align: center;
+}
+
+.botao-verde:hover {
+    background-color: var(--verde-primario);
+    color: white;
+    text-decoration: none;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Cards */
+.card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.card-header {
+    background-color: var(--verde-primario);
+    color: white;
+    padding: 15px 20px;
+    font-weight: 600;
+}
+
+.card-body {
+    padding: 20px;
+}
+
+/* Formulários */
+.formulario {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: var(--cinza-escuro);
+}
+
+.form-control {
+    width: 100%;
+    padding: 10px 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: var(--verde-secundario);
+    box-shadow: 0 0 0 0.2rem rgba(56, 142, 60, 0.25);
+    outline: none;
+}
+
+textarea.form-control {
+    min-height: 150px;
+    resize: vertical;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .conteudo-pagina {
+        padding: 1.5rem;
+    }
+    
+    .cabecalho-pagina h1 {
+        font-size: 1.8rem;
+    }
+    
+    .secao h2 {
+        font-size: 1.5rem;
+    }
+    
+    th, td {
+        padding: 8px 10px;
+        font-size: 0.9rem;
+    }
+}
+
+/* Estilo específico para o formulário de contato do DPO */
+.formulario-contato .form-group {
+    margin-bottom: 1.25rem;
+}
+
+.formulario-contato .form-label {
+    color: var(--verde-primario);
+    font-weight: 600;
+}
+
+.formulario-contato .form-control {
+    border-radius: 8px;
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    transition: all 0.3s ease;
+}
+
+.formulario-contato .form-control:focus {
+    border-color: var(--verde-secundario);
+    box-shadow: 0 0 0 0.25rem rgba(56, 142, 60, 0.25);
+}
+
+.formulario-contato .btn-enviar {
+    background-color: var(--verde-secundario);
+    border: none;
+    padding: 12px 30px;
+    font-weight: 600;
+    border-radius: 8px;
+    color: white;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.formulario-contato .btn-enviar:hover {
+    background-color: var(--verde-primario);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Estilo para a seção de informações de contato */
+.secao-contato {
+    background-color: var(--verde-muito-claro);
+    border-radius: 10px;
+    padding: 2rem;
+    margin-top: 3rem;
+}
+
+.secao-contato h3 {
+    color: var(--verde-primario);
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--verde-secundario);
+    display: inline-block;
+}
+
+.info-contato {
+    margin-bottom: 1.5rem;
+}
+
+.info-contato i {
+    color: var(--verde-secundario);
+    margin-right: 10px;
+    width: 20px;
+    text-align: center;
+}
+
+/* Estilo para o rodapé */
+.rodape-pagina {
+    background-color: var(--verde-primario);
+    color: white;
+    padding: 2rem 0;
+    margin-top: 3rem;
+}
+
+.rodape-pagina a {
+    color: #c8e6c9;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.rodape-pagina a:hover {
+    color: white;
+    text-decoration: underline;
+}
+
+.rodape-pagina h5 {
+    color: white;
+    font-weight: 600;
+    margin-bottom: 1.25rem;
+    position: relative;
+    padding-bottom: 0.75rem;
+}
+
+.rodape-pagina h5:after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 50px;
+    height: 2px;
+    background-color: var(--verde-claro);
+}
+
+.lista-rodape {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.lista-rodape li {
+    margin-bottom: 0.5rem;
+}
+
+.lista-rodape a {
+    display: block;
+    padding: 0.25rem 0;
+}
+
+/* Estilo para o aviso de cookies */
+.aviso-cookies {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 1rem;
+    z-index: 1000;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.aviso-cookies p {
+    margin: 0;
+    flex: 1;
+    padding-right: 1rem;
+}
+
+.aviso-cookies .btn-aceitar {
+    background-color: var(--verde-secundario);
+    color: white;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.aviso-cookies .btn-aceitar:hover {
+    background-color: var(--verde-primario);
+}

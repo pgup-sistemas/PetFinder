@@ -31,18 +31,50 @@
                             </a>
                         </li>
                         <li class="mb-2">
-                            <a href="<?php echo BASE_URL; ?>/busca.php" class="text-light-gray text-decoration-none">
+                            <a href="<?php echo BASE_URL; ?>/busca" class="text-light-gray text-decoration-none">
                                 Buscar Pets
                             </a>
                         </li>
                         <li class="mb-2">
-                            <a href="<?php echo BASE_URL; ?>/novo-anuncio.php" class="text-light-gray text-decoration-none">
+                            <a href="<?php echo BASE_URL; ?>/novo-anuncio" class="text-light-gray text-decoration-none">
                                 Publicar Anúncio
                             </a>
                         </li>
                         <li class="mb-2">
-                            <a href="<?php echo BASE_URL; ?>/doar.php" class="text-light-gray text-decoration-none">
+                            <a href="<?php echo BASE_URL; ?>/doar" class="text-light-gray text-decoration-none">
                                 Doar
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                
+                <!-- Links Legais -->
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <h6 class="mb-3">Informações Legais</h6>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <a href="<?php echo BASE_URL; ?>/politica-privacidade" class="text-light-gray text-decoration-none">
+                                Política de Privacidade
+                            </a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="<?php echo BASE_URL; ?>/termos-uso" class="text-light-gray text-decoration-none">
+                                Termos de Uso
+                            </a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="<?php echo BASE_URL; ?>/politica-cookies" class="text-light-gray text-decoration-none">
+                                Política de Cookies
+                            </a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="<?php echo BASE_URL; ?>/lgpd" class="text-light-gray text-decoration-none">
+                                LGPD - Lei de Proteção de Dados
+                            </a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="<?php echo BASE_URL; ?>/contato-dpo" class="text-light-gray text-decoration-none">
+                                Contato do DPO
                             </a>
                         </li>
                     </ul>
@@ -72,6 +104,14 @@
         </div>
         <div class="bg-black text-center py-3">
             <small class="text-light">&copy; <?php echo date('Y'); ?> PetFinder. Todos os direitos reservados.</small>
+            <div class="mt-2">
+                <small class="text-light-gray">
+                    Feito com <i class="bi bi-heart-fill text-danger"></i> por PageUp Sistemas
+                    <a href="https://wa.me/5569993882222" target="_blank" class="text-light ms-2" title="Fale conosco no WhatsApp">
+                        <i class="bi bi-whatsapp"></i>
+                    </a>
+                </small>
+            </div>
         </div>
     </footer>
 

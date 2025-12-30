@@ -14,6 +14,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $resultado = $doacaoController->criar($_POST);
 
         if (!empty($resultado['success'])) {
+            if (!empty($resultado['redirect'])) {
+                redirect((string)$resultado['redirect']);
+            }
             $successMessage = 'Sua doação foi registrada! Em instantes você receberá instruções de pagamento.';
         } elseif (!empty($resultado['errors'])) {
             $errors = $resultado['errors'];
@@ -85,7 +88,7 @@ include __DIR__ . '/../includes/header.php';
                         <div class="mb-4">
                             <label class="form-label fw-bold">Método de pagamento</label>
                             <div class="row g-2">
-                                <?php $metodos = ['PIX' => 'pix', 'Cartão de Crédito' => 'cartao', 'Cartão de Débito' => 'debito', 'Boleto' => 'boleto']; ?>
+                                <?php $metodos = ['PIX' => 'pix']; ?>
                                 <?php foreach ($metodos as $label => $valor): ?>
                                     <div class="col-6 col-md-3">
                                         <input type="radio" class="btn-check" name="metodo_pagamento" id="metodo_<?php echo $valor; ?>" value="<?php echo $valor; ?>">

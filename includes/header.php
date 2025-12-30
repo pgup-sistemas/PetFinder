@@ -25,7 +25,7 @@ $pageTitle = $pageTitle ?? 'PetFinder';
     <header class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
         <div class="container">
             <a class="navbar-brand fw-bold" href="<?php echo BASE_URL; ?>">
-                <span class="logo-icon">🐾</span> PetFinder
+                <span class="logo-icon">🐾</span> <span class="logo-text">PetFinder</span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
@@ -50,6 +50,10 @@ $pageTitle = $pageTitle ?? 'PetFinder';
                                 Olá, <?php echo sanitize($_SESSION['user_name'] ?? 'Usuário'); ?>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
+                                <?php if (isAdmin()): ?>
+                                    <li><a class="dropdown-item" href="<?php echo BASE_URL; ?>/admin">Painel Admin</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                <?php endif; ?>
                                 <li><a class="dropdown-item" href="<?php echo BASE_URL; ?>/perfil">Meu Perfil</a></li>
                                 <li><a class="dropdown-item" href="<?php echo BASE_URL; ?>/alertas">Meus Alertas</a></li>
                                 <li><a class="dropdown-item" href="<?php echo BASE_URL; ?>/meus-anuncios">Meus Anúncios</a></li>

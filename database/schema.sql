@@ -238,10 +238,10 @@ CREATE TABLE `auditoria` (
 
 -- Usuário Admin (senha: Admin@123)
 INSERT INTO `usuarios` 
-  (`nome`, `email`, `senha`, `cidade`, `estado`, `email_confirmado`, `is_admin`, `ativo`) 
+  (`nome`, `email`, `telefone`, `senha`, `cidade`, `estado`, `email_confirmado`, `is_admin`, `ativo`) 
 VALUES 
-  ('Administrador', 'admin@petfinder.com', 
-   '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+  ('Administrador', 'admin@petfinder.com', '00000000000',
+   '$2y$12$Qr/WHCQl8WZKCYMXrsO8DOcVEkpnDgM409t7VodkxexXxwsWgjJLG',
    'Porto Velho', 'RO', 1, 1, 1);
 
 -- Meta Financeira do Mês Atual

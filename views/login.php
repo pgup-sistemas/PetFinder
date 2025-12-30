@@ -163,16 +163,6 @@ include __DIR__ . '/../includes/header.php';
                     </form>
                 </div>
             </div>
-            
-            <!-- Info Box -->
-            <div class="mt-4 p-3 bg-light rounded text-center">
-                <p class="mb-2 fw-bold text-primary">
-                    <i class="bi bi-info-circle"></i> Teste o sistema
-                </p>
-                <p class="small text-muted mb-0">
-                    <strong>Admin:</strong> admin@petfinder.com / Admin@123
-                </p>
-            </div>
         </div>
     </div>
 </div>

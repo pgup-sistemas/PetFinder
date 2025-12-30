@@ -26,6 +26,37 @@ class DoacaoController
 
         try {
             $doacaoId = $this->doacaoModel->create($payload);
+
+            $metodo = strtolower((string)($payload['metodo_pagamento'] ?? ''));
+            if ($metodo === 'pix') {
+                $pagamentoController = new PagamentoController();
+
+                $doacaoParaPix = $payload;
+                $doacaoParaPix['id'] = $doacaoId;
+
+                $pix = $pagamentoController->criarCobrancaPix($doacaoParaPix, 'Doação PetFinder #' . $doacaoId);
+
+                $this->doacaoModel->updateStatus(
+                    (int)$doacaoId,
+                    'pendente',
+                    [
+                        'gateway' => 'efi',
+                        'transaction_id' => (string)$pix['txid'],
+                    ]
+                );
+
+                if (!isset($_SESSION['pix_doacoes']) || !is_array($_SESSION['pix_doacoes'])) {
+                    $_SESSION['pix_doacoes'] = [];
+                }
+
+                $_SESSION['pix_doacoes'][(int)$doacaoId] = [
+                    'txid' => (string)$pix['txid'],
+                    'qrcode' => $pix['qrcode'],
+                ];
+
+                return ['success' => true, 'id' => $doacaoId, 'redirect' => '/doacao-pix?id=' . $doacaoId];
+            }
+
             return ['success' => true, 'id' => $doacaoId];
         } catch (Exception $e) {
             error_log('[DoacaoController] Erro ao registrar doação: ' . $e->getMessage());
@@ -67,6 +98,15 @@ class DoacaoController
 
         if (empty($dados['metodo_pagamento'])) {
             $erros[] = 'Selecione um método de pagamento.';
+        } else {
+            $metodo = strtolower((string)$dados['metodo_pagamento']);
+            if ($metodo !== 'pix') {
+                $erros[] = 'Método de pagamento ainda não disponível. Utilize Pix.';
+            }
+
+            if (!empty($dados['recorrente']) && $metodo === 'pix') {
+                $erros[] = 'Doação mensal ainda não está disponível via Pix. Selecione doação única.';
+            }
         }
 
         if (!empty($dados['email_doador']) && !isValidEmail($dados['email_doador'])) {

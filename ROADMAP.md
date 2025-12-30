@@ -14,29 +14,31 @@
 - [x] Validação CSRF e sanitização de inputs
 - [x] Banco de dados com schema e dados iniciais
 
-## 🚧 Em Andamento
+## Em Andamento
 
 - [ ] Testar publicação de anúncio com fotos (cache temporário)
 - [ ] Testar fluxos de e-mail ponta a ponta (cadastro, recuperação)
 
-## 📋 Próximas Implementações
+## Próximas Implementações
 
 ### 1. Geolocalização e Mapas (Prioridade: Média)
-- [ ] Integrar Google Maps API ou OpenStreetMap (Leaflet)
-- [ ] Geolocalização automática por IP/CEP
-- [ ] Preencher coordenadas (lat/lng) ao criar anúncio
-- [ ] Mapa interativo na busca e detalhes do anúncio
-- [ ] Busca por raio com visualização no mapa
+- [x] Integrar Google Maps API ou OpenStreetMap (Leaflet)
+- [x] Preencher coordenadas (lat/lng) ao criar anúncio
+- [x] Geolocalização automática por CEP
+- [ ] Geolocalização automática por IP
+- [x] Mapa interativo na busca e detalhes do anúncio
+- [x] Busca por raio com visualização no mapa
 - [ ] Input de endereço com autocomplete
 
 ### 2. Sistema de Doações - Efí Bank (Prioridade: Média)
-- [ ] Criar `controllers/PagamentoController.php`
-- [ ] Model `Doacao` com status e webhook
-- [ ] View de doação com valores sugeridos
-- [ ] Integração Efí Bank (PIX, cartão de crédito)
-- [ ] Webhook para atualizar status após pagamento
+- [x] Criar `controllers/PagamentoController.php`
+- [x] Model `Doacao` com status e webhook
+- [x] View de doação com valores sugeridos
+- [x] Integração Efí Bank (PIX)
+- [x] Webhook para atualizar status após pagamento
+- [x] Relatório de doações para admin
+- [ ] Integração Efí Bank (cartão de crédito)
 - [ ] Página de agradecimento e comprovante
-- [ ] Relatório de doações para admin
 
 ### 3. Melhorias na Busca (Prioridade: Baixa)
 - [ ] Busca com sugestões automáticas (AJAX)

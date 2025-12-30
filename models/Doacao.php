@@ -21,6 +21,16 @@ class Doacao
         return $this->db->insert('doacoes', $data);
     }
 
+    public function findById(int $id)
+    {
+        return $this->db->fetchOne('SELECT * FROM doacoes WHERE id = ? LIMIT 1', [$id]);
+    }
+
+    public function findByTransactionId(string $transactionId)
+    {
+        return $this->db->fetchOne('SELECT * FROM doacoes WHERE transaction_id = ? LIMIT 1', [$transactionId]);
+    }
+
     /**
      * Atualiza status após retorno do gateway.
      */
@@ -28,6 +38,65 @@ class Doacao
     {
         $payload = array_merge($extras, ['status' => $status]);
         return $this->db->update('doacoes', $payload, 'id = ?', [$id]);
+    }
+
+    public function countApprovedDonations(): int
+    {
+        $row = $this->db->fetchOne('SELECT COUNT(*) AS total FROM doacoes WHERE status = "aprovada"');
+        return (int)($row['total'] ?? 0);
+    }
+
+    public function sumApprovedDonations(): float
+    {
+        $row = $this->db->fetchOne('SELECT COALESCE(SUM(valor), 0) AS total FROM doacoes WHERE status = "aprovada"');
+        return (float)($row['total'] ?? 0);
+    }
+
+    public function getApprovedDonationsPublic(int $limit = 20, int $offset = 0): array
+    {
+        return $this->db->fetchAll(
+            'SELECT id, valor, nome_doador, mensagem, data_doacao
+             FROM doacoes
+             WHERE status = "aprovada" AND exibir_mural = 1
+             ORDER BY data_doacao DESC
+             LIMIT ? OFFSET ?',
+            [$limit, $offset]
+        );
+    }
+
+    public function countApprovedDonationsPublic(): int
+    {
+        $row = $this->db->fetchOne('SELECT COUNT(*) AS total FROM doacoes WHERE status = "aprovada" AND exibir_mural = 1');
+        return (int)($row['total'] ?? 0);
+    }
+
+    public function findAll(int $limit = 50, int $offset = 0, ?string $status = null): array
+    {
+        $status = $status !== null ? trim($status) : null;
+        $params = [];
+
+        $sql = 'SELECT * FROM doacoes';
+        if ($status !== null && $status !== '') {
+            $sql .= ' WHERE status = ?';
+            $params[] = $status;
+        }
+        $sql .= ' ORDER BY data_doacao DESC LIMIT ? OFFSET ?';
+        $params[] = $limit;
+        $params[] = $offset;
+
+        return $this->db->fetchAll($sql, $params);
+    }
+
+    public function countAll(?string $status = null): int
+    {
+        $status = $status !== null ? trim($status) : null;
+        if ($status !== null && $status !== '') {
+            $row = $this->db->fetchOne('SELECT COUNT(*) AS total FROM doacoes WHERE status = ?', [$status]);
+            return (int)($row['total'] ?? 0);
+        }
+
+        $row = $this->db->fetchOne('SELECT COUNT(*) AS total FROM doacoes');
+        return (int)($row['total'] ?? 0);
     }
 
     /**
@@ -77,7 +146,7 @@ class Doacao
     public function getCurrentGoalProgress()
     {
         return $this->db->fetchOne(
-            'SELECT m.valor_meta, m.valor_arrecadado, m.custos_servidor, m.custos_manutencao, m.descricao
+            'SELECT m.id, m.mes_referencia, m.valor_meta, m.valor_arrecadado, m.custos_servidor, m.custos_manutencao, m.custos_outros, m.descricao
              FROM metas_financeiras m
              WHERE m.ativo = 1
              ORDER BY m.mes_referencia DESC

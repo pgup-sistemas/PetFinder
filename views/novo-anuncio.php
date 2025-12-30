@@ -134,7 +134,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 setFlashMessage('Anúncio publicado com sucesso!', MSG_SUCCESS);
                 redirect('/anuncio.php?id=' . $result['id']);
             } else {
-                $errors = $result['errors'];
+                $errors = $result['errors'] ?? ['Não foi possível publicar o anúncio. Tente novamente.'];
+
+                $shouldReturnToPhotoStep = false;
+                foreach ($errors as $error) {
+                    if (stripos((string)$error, 'arquivo temporário') !== false) {
+                        $shouldReturnToPhotoStep = true;
+                        break;
+                    }
+                }
+
+                if ($shouldReturnToPhotoStep) {
+                    unset($_SESSION['anuncio_temp_fotos']);
+                    $step = 2;
+                }
             }
         } else {
             // Avança para próximo passo

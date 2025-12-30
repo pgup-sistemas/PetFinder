@@ -6,16 +6,15 @@ RewriteBase /petfinder/
 # RewriteCond %{HTTPS} off
 # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
-# Remover .php das URLs
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^([^.]+)$ $1.php [NC,L]
-
 # Redirecionar URLs amigáveis para views/
 RewriteRule ^busca/?$ views/busca.php [L]
 RewriteRule ^novo-anuncio/?$ views/novo-anuncio.php [L]
 RewriteRule ^doar/?$ views/doar.php [L]
+RewriteRule ^doacao-pix/?$ views/doacao-pix.php [L]
 RewriteRule ^transparencia/?$ views/transparencia.php [L]
+RewriteRule ^admin/?$ views/admin.php [L]
+RewriteRule ^admin/usuarios/?$ views/admin-usuarios.php [L]
+RewriteRule ^admin/financeiro/?$ views/admin-financeiro.php [L]
 RewriteRule ^cadastro/?$ views/cadastro.php [L]
 RewriteRule ^login/?$ views/login.php [L]
 RewriteRule ^perfil/?$ views/perfil.php [L]
@@ -24,6 +23,18 @@ RewriteRule ^alertas/?$ views/alertas.php [L]
 RewriteRule ^anuncio/?$ views/anuncio-detalhes.php [L]
 RewriteRule ^meus-anuncios/?$ views/meus-anuncios.php [L]
 RewriteRule ^logout/?$ views/logout.php [L]
+
+# Páginas de LGPD e Termos
+RewriteRule ^politica-privacidade/?$ views/paginas-estaticas/politica-privacidade.php [L]
+RewriteRule ^termos-uso/?$ views/paginas-estaticas/termos-uso.php [L]
+RewriteRule ^politica-cookies/?$ views/paginas-estaticas/politica-cookies.php [L]
+RewriteRule ^lgpd/?$ views/paginas-estaticas/lgpd.php [L]
+RewriteRule ^contato-dpo/?$ views/paginas-estaticas/contato-dpo.php [L]
+
+# Remover .php das URLs
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^([^.]+)$ $1.php [NC,L]
 
 # Proteger diretórios
 <Files config.php>

@@ -1,0 +1,8 @@
+{
+  "name": "pgup-sistemas/petfinder",
+  "type": "project",
+  "require": {
+    "php": ">=7.2",
+    "efipay/sdk-php-apis-efi": "^1.0"
+  }
+}

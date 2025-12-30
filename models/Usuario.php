@@ -170,5 +170,47 @@ class Usuario
             [$token]
         );
     }
+
+    public function findAll(int $limit = 50, int $offset = 0, ?string $search = null): array
+    {
+        $search = $search !== null ? trim($search) : null;
+        $params = [];
+
+        $sql = 'SELECT * FROM usuarios';
+        if ($search !== null && $search !== '') {
+            $sql .= ' WHERE (nome LIKE ? OR email LIKE ?)';
+            $like = '%' . $search . '%';
+            $params[] = $like;
+            $params[] = $like;
+        }
+        $sql .= ' ORDER BY data_cadastro DESC LIMIT ? OFFSET ?';
+        $params[] = $limit;
+        $params[] = $offset;
+
+        return $this->db->fetchAll($sql, $params);
+    }
+
+    public function countAll(?string $search = null): int
+    {
+        $search = $search !== null ? trim($search) : null;
+        if ($search !== null && $search !== '') {
+            $like = '%' . $search . '%';
+            $row = $this->db->fetchOne('SELECT COUNT(*) AS total FROM usuarios WHERE (nome LIKE ? OR email LIKE ?)', [$like, $like]);
+            return (int)($row['total'] ?? 0);
+        }
+
+        $row = $this->db->fetchOne('SELECT COUNT(*) AS total FROM usuarios');
+        return (int)($row['total'] ?? 0);
+    }
+
+    public function setActive(int $id, bool $active)
+    {
+        return $this->update($id, ['ativo' => $active ? 1 : 0]);
+    }
+
+    public function setAdmin(int $id, bool $isAdmin)
+    {
+        return $this->update($id, ['is_admin' => $isAdmin ? 1 : 0]);
+    }
 }
 

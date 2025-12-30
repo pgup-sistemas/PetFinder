@@ -340,7 +340,9 @@ class AnuncioController
         }
 
         // Validação das fotos
-        if (!empty($files['fotos']) && is_array($files['fotos']['name'])) {
+        if (empty($files['fotos']) || !is_array($files['fotos']) || !is_array($files['fotos']['name'] ?? null)) {
+            $errors[] = 'Adicione pelo menos uma foto para destacar seu anúncio.';
+        } else {
             $totalFotos = $this->countValidFiles($files['fotos']);
             if ($totalFotos > MAX_PHOTOS_PER_AD) {
                 $errors[] = 'Envie no máximo ' . MAX_PHOTOS_PER_AD . ' fotos.';
