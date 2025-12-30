@@ -38,24 +38,70 @@ if ($lat === false || $lng === false) {
     exit;
 }
 
-if (empty(GOOGLE_MAPS_API_KEY) || GOOGLE_MAPS_API_KEY === 'your-google-maps-api-key') {
-    http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'message' => 'Chave da Google Maps API não configurada.'
-    ]);
-    exit;
+function petfinder_extractUfFromNominatim(array $address): string
+{
+    $iso = $address['ISO3166-2-lvl4'] ?? $address['ISO3166-2-lvl3'] ?? $address['ISO3166-2-lvl6'] ?? null;
+    if (is_string($iso) && preg_match('/^BR\-([A-Z]{2})$/', $iso, $matches)) {
+        return $matches[1];
+    }
+
+    $stateName = (string)($address['state'] ?? '');
+    $stateName = mb_strtolower(trim($stateName));
+
+    $map = [
+        'acre' => 'AC',
+        'alagoas' => 'AL',
+        'amapá' => 'AP',
+        'amapa' => 'AP',
+        'amazonas' => 'AM',
+        'bahia' => 'BA',
+        'ceará' => 'CE',
+        'ceara' => 'CE',
+        'distrito federal' => 'DF',
+        'espírito santo' => 'ES',
+        'espirito santo' => 'ES',
+        'goiás' => 'GO',
+        'goias' => 'GO',
+        'maranhão' => 'MA',
+        'maranhao' => 'MA',
+        'mato grosso' => 'MT',
+        'mato grosso do sul' => 'MS',
+        'minas gerais' => 'MG',
+        'pará' => 'PA',
+        'para' => 'PA',
+        'paraíba' => 'PB',
+        'paraiba' => 'PB',
+        'paraná' => 'PR',
+        'parana' => 'PR',
+        'pernambuco' => 'PE',
+        'piauí' => 'PI',
+        'piaui' => 'PI',
+        'rio de janeiro' => 'RJ',
+        'rio grande do norte' => 'RN',
+        'rio grande do sul' => 'RS',
+        'rondônia' => 'RO',
+        'rondonia' => 'RO',
+        'roraima' => 'RR',
+        'santa catarina' => 'SC',
+        'são paulo' => 'SP',
+        'sao paulo' => 'SP',
+        'sergipe' => 'SE',
+        'tocantins' => 'TO',
+    ];
+
+    return $map[$stateName] ?? '';
 }
 
-$query = http_build_query([
-    'latlng' => sprintf('%.8f,%.8f', $lat, $lng),
-    'key' => GOOGLE_MAPS_API_KEY,
-    'language' => 'pt-BR'
-]);
+function petfinder_reverseGeocodeGoogle(float $lat, float $lng): array
+{
+    $query = http_build_query([
+        'latlng' => sprintf('%.8f,%.8f', $lat, $lng),
+        'key' => GOOGLE_MAPS_API_KEY,
+        'language' => 'pt-BR'
+    ]);
 
-$url = 'https://maps.googleapis.com/maps/api/geocode/json?' . $query;
+    $url = 'https://maps.googleapis.com/maps/api/geocode/json?' . $query;
 
-try {
     $ch = curl_init($url);
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true,
@@ -75,12 +121,7 @@ try {
     curl_close($ch);
 
     if ($httpCode >= 400) {
-        http_response_code(502);
-        echo json_encode([
-            'success' => false,
-            'message' => 'Serviço de geocodificação indisponível no momento.'
-        ]);
-        exit;
+        throw new RuntimeException('Serviço Google Geocoding indisponível (HTTP ' . $httpCode . ').');
     }
 
     $payload = json_decode($response, true);
@@ -90,12 +131,7 @@ try {
     }
 
     if (($payload['status'] ?? '') !== 'OK' || empty($payload['results'])) {
-        http_response_code(404);
-        echo json_encode([
-            'success' => false,
-            'message' => 'Endereço não encontrado para as coordenadas informadas.'
-        ]);
-        exit;
+        throw new RuntimeException('Endereço não encontrado no Google Maps.');
     }
 
     $result = $payload['results'][0];
@@ -133,10 +169,92 @@ try {
         }
     }
 
+    return $addressData;
+}
+
+function petfinder_reverseGeocodeNominatim(float $lat, float $lng): array
+{
+    $query = http_build_query([
+        'format' => 'jsonv2',
+        'lat' => sprintf('%.8f', $lat),
+        'lon' => sprintf('%.8f', $lng),
+        'addressdetails' => 1,
+        'accept-language' => 'pt-BR'
+    ]);
+
+    $url = 'https://nominatim.openstreetmap.org/reverse?' . $query;
+
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 10,
+        CURLOPT_CONNECTTIMEOUT => 5,
+        CURLOPT_SSL_VERIFYPEER => true,
+        CURLOPT_SSL_VERIFYHOST => 2,
+        CURLOPT_HTTPHEADER => [
+            'Accept: application/json',
+            'User-Agent: PetFinder/1.0 (+https://github.com/pgup-sistemas/PetFinder)'
+        ],
+    ]);
+
+    $response = curl_exec($ch);
+
+    if ($response === false) {
+        throw new RuntimeException('Erro ao consultar Nominatim: ' . curl_error($ch));
+    }
+
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($httpCode >= 400) {
+        throw new RuntimeException('Serviço Nominatim indisponível (HTTP ' . $httpCode . ').');
+    }
+
+    $payload = json_decode($response, true);
+
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        throw new RuntimeException('Resposta inválida do Nominatim.');
+    }
+
+    $address = $payload['address'] ?? [];
+
+    $logradouro = (string)($address['road'] ?? $address['pedestrian'] ?? $address['footway'] ?? '');
+    $bairro = (string)($address['neighbourhood'] ?? $address['suburb'] ?? $address['quarter'] ?? '');
+    $cidade = (string)($address['city'] ?? $address['town'] ?? $address['village'] ?? $address['municipality'] ?? $address['county'] ?? '');
+    $estado = petfinder_extractUfFromNominatim($address);
+    $cep = (string)($address['postcode'] ?? '');
+    $pais = (string)($address['country'] ?? '');
+
+    return [
+        'logradouro' => $logradouro,
+        'bairro' => $bairro,
+        'cidade' => $cidade,
+        'estado' => $estado,
+        'cep' => $cep,
+        'pais' => $pais,
+        'latitude' => $lat,
+        'longitude' => $lng
+    ];
+}
+
+try {
+    $useGoogle = !empty(GOOGLE_MAPS_API_KEY) && GOOGLE_MAPS_API_KEY !== 'your-google-maps-api-key';
+
+    if ($useGoogle) {
+        $addressData = petfinder_reverseGeocodeGoogle($lat, $lng);
+        echo json_encode([
+            'success' => true,
+            'data' => $addressData,
+            'provider' => 'google'
+        ]);
+        exit;
+    }
+
+    $addressData = petfinder_reverseGeocodeNominatim($lat, $lng);
     echo json_encode([
         'success' => true,
         'data' => $addressData,
-        'raw' => $result
+        'provider' => 'nominatim'
     ]);
 } catch (Throwable $e) {
     error_log('[API Geocode] ' . $e->getMessage());

@@ -434,6 +434,9 @@ include __DIR__ . '/../includes/header.php';
                                                class="form-control" 
                                                id="cep" 
                                                name="cep"
+                                               inputmode="numeric"
+                                               pattern="\d*"
+                                               data-mask="cep"
                                                placeholder="00000-000"
                                                maxlength="9"
                                                value="<?php echo sanitize($formData['cep'] ?? ''); ?>">
@@ -490,6 +493,12 @@ include __DIR__ . '/../includes/header.php';
                                                value="<?php echo sanitize($formData['estado'] ?? ''); ?>"
                                                required>
                                     </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Marque no mapa</label>
+                                    <div id="mapPicker" class="petfinder-map"></div>
+                                    <small class="text-muted">Clique no mapa para ajustar a posição (ou arraste o marcador).</small>
                                 </div>
                                 
                                 <!-- Ponto de Referência -->
@@ -708,9 +717,65 @@ include __DIR__ . '/../includes/header.php';
     flex: 1;
     min-width: 120px;
 }
+
+.petfinder-map {
+    height: 280px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(0,0,0,0.08);
+}
 </style>
 
 <script>
+document.addEventListener('DOMContentLoaded', function () {
+    if (document.getElementById('mapPicker') && window.PetFinderMap) {
+        window.__petfinderMapPicker = window.PetFinderMap.init({
+            containerId: 'mapPicker',
+            latInputId: 'latitude',
+            lngInputId: 'longitude'
+        });
+
+        if (window.__petfinderMapPicker && window.__petfinderMapPicker.fitToPoint) {
+            window.__petfinderMapPicker.fitToPoint();
+        }
+    }
+
+    const cepInput = document.getElementById('cep');
+    if (cepInput) {
+        let cepAutoLookupTimer = null;
+        let lastCepLookedUp = null;
+
+        cepInput.addEventListener('input', function () {
+            const digits = (cepInput.value || '').replace(/\D/g, '');
+
+            if (cepAutoLookupTimer) {
+                clearTimeout(cepAutoLookupTimer);
+            }
+
+            if (digits.length !== 8) {
+                lastCepLookedUp = null;
+                return;
+            }
+
+            if (lastCepLookedUp === digits) {
+                return;
+            }
+
+            cepAutoLookupTimer = setTimeout(function () {
+                lastCepLookedUp = digits;
+                buscarCEP();
+            }, 450);
+        });
+
+        cepInput.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                buscarCEP();
+            }
+        });
+    }
+});
+
 // Preview de fotos
 document.getElementById('fotos')?.addEventListener('change', function(e) {
     const preview = document.getElementById('preview');
@@ -763,7 +828,7 @@ async function buscarCEP() {
     cepButton.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Buscando';
 
     try {
-        const response = await fetch(`/api/cep.php?cep=${cep}`, {
+        const response = await fetch(`<?php echo BASE_URL; ?>/api/cep.php?cep=${cep}`, {
             headers: {
                 'Accept': 'application/json'
             }
@@ -785,6 +850,14 @@ async function buscarCEP() {
             estado: data.estado,
             cep: data.cep
         }, { limparCoordenadas: true });
+
+        if (!data.logradouro) {
+            const enderecoEl = document.getElementById('endereco');
+            if (enderecoEl && !String(enderecoEl.value || '').trim()) {
+                enderecoEl.focus();
+            }
+            alert('CEP encontrado, mas sem rua/logradouro (CEP geral). Preencha a rua manualmente.');
+        }
 
         if (!document.getElementById('whatsapp').value && data.ddd) {
             document.getElementById('whatsapp').value = `(${data.ddd}) `;
@@ -821,7 +894,7 @@ function onGeolocationSuccess(position) {
     gpsButton.disabled = true;
     gpsButton.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Carregando';
 
-    fetch(`/api/geocode.php?lat=${lat}&lng=${lng}`, {
+    fetch(`<?php echo BASE_URL; ?>/api/geocode.php?lat=${lat}&lng=${lng}`, {
         headers: { 'Accept': 'application/json' }
     })
         .then(async response => {
@@ -858,14 +931,31 @@ function preencherCamposEndereco(data = {}, opcoes = {}) {
         document.getElementById('cep').value = data.cep ? formatarCEP(data.cep) : document.getElementById('cep').value;
     }
 
-    document.getElementById('endereco').value = data.logradouro || '';
-    document.getElementById('bairro').value = data.bairro || '';
-    document.getElementById('cidade').value = data.cidade || '';
-    document.getElementById('estado').value = data.estado || '';
+    const enderecoEl = document.getElementById('endereco');
+    const bairroEl = document.getElementById('bairro');
+    const cidadeEl = document.getElementById('cidade');
+    const estadoEl = document.getElementById('estado');
+
+    if (data.logradouro) {
+        enderecoEl.value = data.logradouro;
+    }
+    if (data.bairro) {
+        bairroEl.value = data.bairro;
+    }
+    if (data.cidade) {
+        cidadeEl.value = data.cidade;
+    }
+    if (data.estado) {
+        estadoEl.value = data.estado;
+    }
 
     if (data.latitude && data.longitude) {
         document.getElementById('latitude').value = data.latitude;
         document.getElementById('longitude').value = data.longitude;
+
+        if (window.__petfinderMapPicker && window.__petfinderMapPicker.setPoint) {
+            window.__petfinderMapPicker.setPoint(Number(data.latitude), Number(data.longitude));
+        }
     } else if (opcoes.limparCoordenadas) {
         document.getElementById('latitude').value = '';
         document.getElementById('longitude').value = '';

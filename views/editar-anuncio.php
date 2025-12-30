@@ -152,9 +152,25 @@ include __DIR__ . '/../includes/header.php';
                                 <input type="text" class="form-control form-control-lg" name="estado" value="<?php echo sanitize($anuncio['estado'] ?? ''); ?>" maxlength="2" required>
                             </div>
 
+                            <div class="col-12">
+                                <label class="form-label fw-bold">Marque no mapa</label>
+                                <div id="mapPickerEditar" class="petfinder-map"></div>
+                                <div class="form-text">Clique no mapa para ajustar a posição (ou arraste o marcador).</div>
+                                <input type="hidden" name="latitude" id="latitude" value="<?php echo sanitize($anuncio['latitude'] ?? ''); ?>">
+                                <input type="hidden" name="longitude" id="longitude" value="<?php echo sanitize($anuncio['longitude'] ?? ''); ?>">
+                            </div>
+
                             <div class="col-md-4">
                                 <label class="form-label">CEP</label>
-                                <input type="text" class="form-control form-control-lg" name="cep" value="<?php echo sanitize($anuncio['cep'] ?? ''); ?>" maxlength="10">
+                                <input type="text"
+                                       class="form-control form-control-lg"
+                                       name="cep"
+                                       inputmode="numeric"
+                                       pattern="\d*"
+                                       data-mask="cep"
+                                       placeholder="00000-000"
+                                       maxlength="9"
+                                       value="<?php echo sanitize($anuncio['cep'] ?? ''); ?>">
                             </div>
 
                             <div class="col-md-8">
@@ -193,5 +209,30 @@ include __DIR__ . '/../includes/header.php';
         </div>
     </div>
 </div>
+
+<style>
+.petfinder-map {
+    height: 280px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(0,0,0,0.08);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    if (document.getElementById('mapPickerEditar') && window.PetFinderMap) {
+        const instance = window.PetFinderMap.init({
+            containerId: 'mapPickerEditar',
+            latInputId: 'latitude',
+            lngInputId: 'longitude'
+        });
+
+        if (instance && instance.fitToPoint) {
+            instance.fitToPoint();
+        }
+    }
+});
+</script>
 
 <?php include __DIR__ . '/../includes/footer.php'; ?>

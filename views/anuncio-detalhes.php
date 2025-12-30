@@ -159,9 +159,10 @@ include __DIR__ . '/../includes/header.php';
                     <p class="text-muted mb-0">Bairro <?php echo sanitize($anuncio['bairro']); ?> • <?php echo sanitize($anuncio['cidade']); ?> - <?php echo sanitize($anuncio['estado']); ?></p>
                 </div>
                 <?php if (!empty($anuncio['latitude']) && !empty($anuncio['longitude'])): ?>
-                    <div class="ratio ratio-4x3">
-                        <iframe src="https://www.google.com/maps?q=<?php echo $anuncio['latitude']; ?>,<?php echo $anuncio['longitude']; ?>&output=embed" allowfullscreen loading="lazy"></iframe>
-                    </div>
+                    <div id="mapDetalhe"
+                         class="petfinder-map"
+                         data-lat="<?php echo sanitize($anuncio['latitude']); ?>"
+                         data-lng="<?php echo sanitize($anuncio['longitude']); ?>"></div>
                 <?php endif; ?>
             </div>
 
@@ -222,6 +223,43 @@ include __DIR__ . '/../includes/header.php';
     font-weight: 600;
     color: #333;
 }
+
+.petfinder-map {
+    height: 280px;
+    border-bottom-left-radius: 0.375rem;
+    border-bottom-right-radius: 0.375rem;
+    overflow: hidden;
+    border-top: 1px solid rgba(0,0,0,0.08);
+}
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const mapEl = document.getElementById('mapDetalhe');
+    if (!mapEl || !window.L) {
+        return;
+    }
+
+    const lat = Number(mapEl.dataset.lat);
+    const lng = Number(mapEl.dataset.lng);
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+        return;
+    }
+
+    const map = L.map('mapDetalhe', {
+        scrollWheelZoom: false,
+        dragging: true,
+        tap: true
+    }).setView([lat, lng], 15);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap'
+    }).addTo(map);
+
+    L.marker([lat, lng]).addTo(map);
+});
+</script>
 
 <?php include __DIR__ . '/../includes/footer.php'; ?>

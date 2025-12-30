@@ -158,6 +158,18 @@ class AnuncioController
 
         $data = sanitize($data);
 
+        $latitude = null;
+        if (array_key_exists('latitude', $data)) {
+            $latitude = filter_var($data['latitude'], FILTER_VALIDATE_FLOAT);
+            $latitude = ($latitude === false) ? null : (float)$latitude;
+        }
+
+        $longitude = null;
+        if (array_key_exists('longitude', $data)) {
+            $longitude = filter_var($data['longitude'], FILTER_VALIDATE_FLOAT);
+            $longitude = ($longitude === false) ? null : (float)$longitude;
+        }
+
         $payload = [
             'tipo' => $data['tipo'] ?? $anuncio['tipo'],
             'especie' => $data['especie'] ?? $anuncio['especie'],
@@ -173,6 +185,8 @@ class AnuncioController
             'estado' => isset($data['estado']) ? strtoupper($data['estado']) : $anuncio['estado'],
             'cep' => $data['cep'] ?? null,
             'ponto_referencia' => $data['ponto_referencia'] ?? null,
+            'latitude' => $latitude,
+            'longitude' => $longitude,
             'whatsapp' => $data['whatsapp'] ?? $anuncio['whatsapp'],
             'telefone_contato' => $data['telefone_contato'] ?? null,
             'email_contato' => $data['email_contato'] ?? null,
@@ -356,8 +370,17 @@ class AnuncioController
 
     private function buildInsertPayload(array $data, int $userId): array
     {
-        $latitude = isset($data['latitude']) ? (float)$data['latitude'] : null;
-        $longitude = isset($data['longitude']) ? (float)$data['longitude'] : null;
+        $latitude = null;
+        if (array_key_exists('latitude', $data)) {
+            $latitude = filter_var($data['latitude'], FILTER_VALIDATE_FLOAT);
+            $latitude = ($latitude === false) ? null : (float)$latitude;
+        }
+
+        $longitude = null;
+        if (array_key_exists('longitude', $data)) {
+            $longitude = filter_var($data['longitude'], FILTER_VALIDATE_FLOAT);
+            $longitude = ($longitude === false) ? null : (float)$longitude;
+        }
 
         return [
             'usuario_id' => $userId,
@@ -375,8 +398,8 @@ class AnuncioController
             'estado' => strtoupper($data['estado']),
             'cep' => $data['cep'] ?? null,
             'ponto_referencia' => $data['ponto_referencia'] ?? null,
-            'latitude' => $latitude ?: null,
-            'longitude' => $longitude ?: null,
+            'latitude' => $latitude,
+            'longitude' => $longitude,
             'telefone_contato' => !empty($data['telefone_contato']) ? preg_replace('/[^0-9]/', '', $data['telefone_contato']) : null,
             'whatsapp' => preg_replace('/[^0-9]/', '', $data['whatsapp']),
             'email_contato' => $data['email_contato'] ?? null,
