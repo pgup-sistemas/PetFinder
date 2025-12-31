@@ -9,9 +9,45 @@ class Usuario
 {
     protected $db;
 
+    private static $columnsCache = null;
+
     public function __construct($db = null)
     {
         $this->db = $db ?: getDB();
+    }
+
+    private function getColumns(): array
+    {
+        if (self::$columnsCache !== null) {
+            return self::$columnsCache;
+        }
+
+        try {
+            $rows = $this->db->fetchAll('SHOW COLUMNS FROM usuarios');
+            $cols = [];
+            foreach ($rows as $row) {
+                if (!empty($row['Field'])) {
+                    $cols[] = (string)$row['Field'];
+                }
+            }
+
+            self::$columnsCache = $cols;
+            return $cols;
+        } catch (Throwable $e) {
+            error_log('[Usuario] Falha ao obter colunas da tabela usuarios: ' . $e->getMessage());
+            self::$columnsCache = [];
+            return [];
+        }
+    }
+
+    private function filterDataToExistingColumns(array $data): array
+    {
+        $columns = $this->getColumns();
+        if (empty($columns)) {
+            return $data;
+        }
+
+        return array_intersect_key($data, array_flip($columns));
     }
 
     /**
@@ -20,6 +56,7 @@ class Usuario
      */
     public function create(array $data): int
     {
+        $data = $this->filterDataToExistingColumns($data);
         return $this->db->insert('usuarios', $data);
     }
 
@@ -28,6 +65,7 @@ class Usuario
      */
     public function update(int $id, array $data)
     {
+        $data = $this->filterDataToExistingColumns($data);
         if (empty($data)) {
             return false;
         }

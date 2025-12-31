@@ -13,6 +13,20 @@ $pageTitle = $pageTitle ?? 'PetFinder';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo sanitize($pageTitle); ?></title>
 
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ctext y='50' font-size='48'%3E%F0%9F%90%BE%3C/text%3E%3C/svg%3E">
+
+    <?php if (!empty($metaOgTitle) || !empty($metaOgDescription) || !empty($metaOgImage) || !empty($metaOgUrl)): ?>
+        <meta property="og:type" content="website">
+        <?php if (!empty($metaOgTitle)): ?><meta property="og:title" content="<?php echo sanitize($metaOgTitle); ?>"><?php endif; ?>
+        <?php if (!empty($metaOgDescription)): ?><meta property="og:description" content="<?php echo sanitize($metaOgDescription); ?>"><?php endif; ?>
+        <?php if (!empty($metaOgUrl)): ?><meta property="og:url" content="<?php echo sanitize($metaOgUrl); ?>"><?php endif; ?>
+        <?php if (!empty($metaOgImage)): ?><meta property="og:image" content="<?php echo sanitize($metaOgImage); ?>"><?php endif; ?>
+        <meta name="twitter:card" content="summary_large_image">
+        <?php if (!empty($metaOgTitle)): ?><meta name="twitter:title" content="<?php echo sanitize($metaOgTitle); ?>"><?php endif; ?>
+        <?php if (!empty($metaOgDescription)): ?><meta name="twitter:description" content="<?php echo sanitize($metaOgDescription); ?>"><?php endif; ?>
+        <?php if (!empty($metaOgImage)): ?><meta name="twitter:image" content="<?php echo sanitize($metaOgImage); ?>"><?php endif; ?>
+    <?php endif; ?>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -44,10 +58,22 @@ $pageTitle = $pageTitle ?? 'PetFinder';
                     <li class="nav-item">
                         <a class="nav-link" href="<?php echo BASE_URL; ?>/doar">Doar</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="<?php echo BASE_URL; ?>/ajuda">Ajuda</a>
+                    </li>
                     <?php if (isLoggedIn()): ?>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                Olá, <?php echo sanitize($_SESSION['user_name'] ?? 'Usuário'); ?>
+                                <?php
+                                    $userFullName = (string)($_SESSION['user_name'] ?? 'Usuário');
+                                    $userFirstName = trim(strtok($userFullName, ' '));
+                                    if ($userFirstName === '') {
+                                        $userFirstName = 'Usuário';
+                                    }
+                                ?>
+                                <i class="bi bi-person-circle"></i>
+                                <span class="d-lg-none">Conta</span>
+                                <span class="d-none d-lg-inline">Olá, <?php echo sanitize($userFirstName); ?></span>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
                                 <?php if (isAdmin()): ?>

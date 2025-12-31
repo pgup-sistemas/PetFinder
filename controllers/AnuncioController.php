@@ -42,10 +42,15 @@ class AnuncioController
             return ['success' => false, 'errors' => ['Sessão expirada. Faça login novamente.']];
         }
 
+        // Log dos dados recebidos
+        error_log('Dados recebidos no método create: ' . print_r($data, true));
+        error_log('Tipo de anúncio recebido: ' . ($data['tipo'] ?? 'não definido'));
+
         $data = sanitize($data);
         $errors = $this->validateCreateData($data, $files, $userId);
 
         if (!empty($errors)) {
+            error_log('Erros de validação: ' . print_r($errors, true));
             return ['success' => false, 'errors' => $errors];
         }
 
@@ -63,7 +68,7 @@ class AnuncioController
             $this->db->commit();
 
             return ['success' => true, 'id' => $anuncioId];
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->db->rollback();
             error_log('[AnuncioController] Falha ao criar anúncio: ' . $e->getMessage());
             return ['success' => false, 'errors' => ['Erro inesperado ao salvar o anúncio. Tente novamente.']];
@@ -75,9 +80,17 @@ class AnuncioController
      */
     public function getDetalhes(int $id)
     {
-        $anuncio = $this->anuncioModel->findById($id);
+        $anuncio = $this->anuncioModel->findByIdAnyStatus($id);
 
         if (!$anuncio) {
+            return null;
+        }
+
+        $userId = call_user_func($this->userIdResolver);
+        $isAdmin = call_user_func($this->isAdminResolver);
+        $isOwner = $userId && (int)$anuncio['usuario_id'] === (int)$userId;
+
+        if (in_array($anuncio['status'], [STATUS_INATIVO, STATUS_BLOQUEADO], true) && !$isOwner && !$isAdmin) {
             return null;
         }
 
@@ -112,7 +125,7 @@ class AnuncioController
      */
     public function marcarComoResolvido(int $id, int $usuarioId)
     {
-        $anuncio = $this->anuncioModel->findById($id);
+        $anuncio = $this->anuncioModel->findByIdAnyStatus($id);
 
         if (!$anuncio) {
             return ['success' => false, 'error' => 'Anúncio não encontrado.'];
@@ -125,6 +138,35 @@ class AnuncioController
 
         $this->anuncioModel->markAsResolved($id);
         return ['success' => true, 'showDonation' => true];
+    }
+
+    /**
+     * Soft delete do anúncio (dono ou admin).
+     */
+    public function excluir(int $id)
+    {
+        $userId = call_user_func($this->userIdResolver);
+        if (!$userId) {
+            return ['success' => false, 'error' => 'Sessão expirada. Faça login novamente.'];
+        }
+
+        $anuncio = $this->anuncioModel->findByIdAnyStatus($id);
+        if (!$anuncio) {
+            return ['success' => false, 'error' => 'Anúncio não encontrado.'];
+        }
+
+        $isAdmin = call_user_func($this->isAdminResolver);
+        if ((int)$anuncio['usuario_id'] !== (int)$userId && !$isAdmin) {
+            return ['success' => false, 'error' => 'Você não tem permissão para excluir este anúncio.'];
+        }
+
+        if ($isAdmin && (int)$anuncio['usuario_id'] !== (int)$userId) {
+            $this->anuncioModel->softDeleteAsAdmin($id);
+        } else {
+            $this->anuncioModel->softDelete($id, (int)$anuncio['usuario_id']);
+        }
+
+        return ['success' => true];
     }
 
     /**
@@ -177,6 +219,10 @@ class AnuncioController
             'tamanho' => $data['tamanho'] ?? $anuncio['tamanho'],
             'raca' => $data['raca'] ?? null,
             'cor' => $data['cor'] ?? null,
+            'idade' => array_key_exists('idade', $data) && $data['idade'] !== '' ? (int)$data['idade'] : null,
+            'vacinas' => array_key_exists('vacinas', $data) ? ($data['vacinas'] !== '' ? $data['vacinas'] : null) : null,
+            'castrado' => array_key_exists('castrado', $data) && $data['castrado'] !== '' ? (int)($data['castrado'] === '1' || $data['castrado'] === 1 || $data['castrado'] === true) : null,
+            'necessita_termo_responsabilidade' => !empty($data['necessita_termo_responsabilidade']) ? 1 : 0,
             'descricao' => $data['descricao'] ?? null,
             'data_ocorrido' => $data['data_ocorrido'] ?? $anuncio['data_ocorrido'],
             'endereco_completo' => $data['endereco_completo'] ?? $anuncio['endereco_completo'],
@@ -196,7 +242,7 @@ class AnuncioController
 
         $errors = [];
 
-        if (!in_array($payload['tipo'], [TIPO_PERDIDO, TIPO_ENCONTRADO], true)) {
+        if (!in_array($payload['tipo'], [TIPO_PERDIDO, TIPO_ENCONTRADO, TIPO_DOACAO], true)) {
             $errors[] = 'Informe se o pet está perdido ou encontrado.';
         }
 
@@ -279,7 +325,7 @@ class AnuncioController
         }
 
         $tipo = $data['tipo'] ?? '';
-        if (!in_array($tipo, [TIPO_PERDIDO, TIPO_ENCONTRADO], true)) {
+        if (!in_array($tipo, [TIPO_PERDIDO, TIPO_ENCONTRADO, TIPO_DOACAO], true)) {
             $errors[] = 'Informe se o pet está perdido ou encontrado.';
         }
 
@@ -312,6 +358,16 @@ class AnuncioController
             $tresAnosAtras = strtotime('-3 years');
             if ($timestamp < $tresAnosAtras) {
                 $errors[] = 'Data do ocorrido deve estar dentro dos últimos 3 anos.';
+            }
+        }
+
+        if ($tipo === TIPO_DOACAO) {
+            $idade = $data['idade'] ?? null;
+            if ($idade !== null && $idade !== '') {
+                $idadeInt = filter_var($idade, FILTER_VALIDATE_INT);
+                if ($idadeInt === false || $idadeInt < 0 || $idadeInt > 60) {
+                    $errors[] = 'Idade inválida. Informe a idade em anos (0 a 60).';
+                }
             }
         }
 
@@ -392,6 +448,10 @@ class AnuncioController
             'raca' => $data['raca'] ?? null,
             'cor' => $data['cor'] ?? null,
             'tamanho' => $data['tamanho'],
+            'idade' => isset($data['idade']) && $data['idade'] !== '' ? (int)$data['idade'] : null,
+            'vacinas' => $data['vacinas'] ?? null,
+            'castrado' => array_key_exists('castrado', $data) ? (int)($data['castrado'] === '1' || $data['castrado'] === 1 || $data['castrado'] === true) : null,
+            'necessita_termo_responsabilidade' => !empty($data['necessita_termo_responsabilidade']) ? 1 : 0,
             'descricao' => $data['descricao'],
             'data_ocorrido' => $data['data_ocorrido'],
             'endereco_completo' => $data['endereco_completo'],
@@ -452,7 +512,7 @@ class AnuncioController
             $filters['q'] = trim($params['q']);
         }
 
-        if (!empty($params['tipo']) && in_array($params['tipo'], [TIPO_PERDIDO, TIPO_ENCONTRADO], true)) {
+        if (!empty($params['tipo']) && in_array($params['tipo'], [TIPO_PERDIDO, TIPO_ENCONTRADO, TIPO_DOACAO], true)) {
             $filters['tipo'] = $params['tipo'];
         }
 

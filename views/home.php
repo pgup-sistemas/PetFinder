@@ -58,6 +58,9 @@ include __DIR__ . '/../includes/header.php';
                     <a href="<?php echo BASE_URL; ?>/busca?tipo=encontrado" class="btn btn-outline-success">
                         🟢 Encontrados
                     </a>
+                    <a href="<?php echo BASE_URL; ?>/busca?tipo=doacao" class="btn btn-outline-primary">
+                        💙 Adoção
+                    </a>
                     <a href="<?php echo BASE_URL; ?>/busca?especie=cachorro" class="btn btn-outline-secondary">
                         🐕 Cachorros
                     </a>
@@ -120,6 +123,16 @@ include __DIR__ . '/../includes/header.php';
                     <div class="stat-label">Casos Resolvidos</div>
                 </div>
             </div>
+            <?php if (!empty($stats['doacoes_ativas']) || (isset($stats['doacoes_ativas']) && (int)$stats['doacoes_ativas'] === 0)): ?>
+                <div class="col-md-3 col-6 mb-3">
+                    <div class="stat-card">
+                        <div class="stat-number text-primary">
+                            <?php echo number_format($stats['doacoes_ativas'] ?? 0); ?>
+                        </div>
+                        <div class="stat-label">Pets para Adoção</div>
+                    </div>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
 </div>
@@ -148,7 +161,7 @@ include __DIR__ . '/../includes/header.php';
                             <?php endif; ?>
                             
                             <div class="anuncio-badge badge-<?php echo $anuncio['tipo']; ?>">
-                                <?php echo $anuncio['tipo'] == 'perdido' ? '🔴 Perdido' : '🟢 Encontrado'; ?>
+                                <?php echo $anuncio['tipo'] == 'perdido' ? '🔴 Perdido' : ($anuncio['tipo'] == 'doacao' ? '💙 Adoção' : '🟢 Encontrado'); ?>
                             </div>
                         </div>
                         

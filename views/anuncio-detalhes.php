@@ -24,6 +24,24 @@ $isOwner = isLoggedIn() && getUserId() == $anuncio['usuario_id'];
 $favoritoController = new FavoritoController();
 $isFavorited = $favoritoController->isFavorited($anuncio['id']);
 
+$shareUrl = rtrim((string)BASE_URL, '/') . '/anuncio.php?id=' . (int)$anuncio['id'];
+$shareTitle = ($anuncio['nome_pet'] ?: ('Pet ' . ucfirst($anuncio['especie'])));
+$shareDescription = trim((string)($anuncio['descricao'] ?? ''));
+if ($shareDescription === '') {
+    $shareDescription = 'Veja este anúncio no PetFinder.';
+}
+$shareDescription = truncate($shareDescription, 140);
+
+$firstPhoto = null;
+if (!empty($anuncio['fotos'][0]['nome_arquivo'])) {
+    $firstPhoto = rtrim((string)BASE_URL, '/') . '/uploads/anuncios/' . $anuncio['fotos'][0]['nome_arquivo'];
+}
+
+$metaOgTitle = $shareTitle;
+$metaOgDescription = $shareDescription;
+$metaOgUrl = $shareUrl;
+$metaOgImage = $firstPhoto;
+
 include __DIR__ . '/../includes/header.php';
 ?>
 
@@ -43,7 +61,8 @@ include __DIR__ . '/../includes/header.php';
                     <?php if (!empty($anuncio['fotos'])): ?>
                         <?php foreach ($anuncio['fotos'] as $index => $foto): ?>
                             <div class="carousel-item <?php echo $index === 0 ? 'active' : ''; ?>">
-                                <img src="<?php echo BASE_URL; ?>/uploads/anuncios/<?php echo sanitize($foto['nome_arquivo']); ?>" class="d-block w-100 rounded" alt="Foto do pet">
+                                <div class="carousel-blur-bg" style="background-image: url('<?php echo BASE_URL; ?>/uploads/anuncios/<?php echo sanitize($foto['nome_arquivo']); ?>');"></div>
+                                <img src="<?php echo BASE_URL; ?>/uploads/anuncios/<?php echo sanitize($foto['nome_arquivo']); ?>" class="d-block w-100 rounded carousel-photo" alt="Foto do pet">
                             </div>
                         <?php endforeach; ?>
                     <?php else: ?>
@@ -73,8 +92,8 @@ include __DIR__ . '/../includes/header.php';
                 <div class="card-body p-4">
                     <h2 class="h4 fw-bold mb-3"><?php echo sanitize($anuncio['nome_pet'] ?: 'Pet ' . ucfirst($anuncio['especie'])); ?></h2>
                     <div class="d-flex flex-wrap gap-2 mb-3">
-                        <span class="badge bg-<?php echo $anuncio['tipo'] === 'perdido' ? 'danger' : 'success'; ?>">
-                            <?php echo $anuncio['tipo'] === 'perdido' ? '🔴 Perdido' : '🟢 Encontrado'; ?>
+                        <span class="badge bg-<?php echo $anuncio['tipo'] === 'perdido' ? 'danger' : ($anuncio['tipo'] === 'doacao' ? 'primary' : 'success'); ?>">
+                            <?php echo $anuncio['tipo'] === 'perdido' ? '🔴 Perdido' : ($anuncio['tipo'] === 'doacao' ? '💙 Adoção' : '🟢 Encontrado'); ?>
                         </span>
                         <span class="badge bg-light text-dark"><i class="bi bi-geo-alt me-1"></i><?php echo sanitize($anuncio['bairro']); ?> - <?php echo sanitize($anuncio['cidade']); ?></span>
                         <span class="badge bg-light text-dark"><?php echo ucfirst($anuncio['especie']); ?></span>
@@ -104,10 +123,55 @@ include __DIR__ . '/../includes/header.php';
                         </div>
                     </div>
 
+                    <?php if ($isOwner && ($anuncio['status'] ?? '') !== STATUS_RESOLVIDO && ($anuncio['status'] ?? '') !== STATUS_INATIVO): ?>
+                        <form method="POST" action="<?php echo BASE_URL; ?>/marcar-resolvido.php" class="mb-4" onsubmit="return confirm('Marcar este anúncio como resolvido?');">
+                            <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
+                            <input type="hidden" name="anuncio_id" value="<?php echo (int)$anuncio['id']; ?>">
+                            <input type="hidden" name="return_to" value="<?php echo '/anuncio.php?id=' . (int)$anuncio['id']; ?>">
+                            <button type="submit" class="btn btn-outline-success">
+                                <i class="bi bi-check2-circle me-1"></i> Marcar como resolvido
+                            </button>
+                        </form>
+                    <?php endif; ?>
+
                     <h5 class="fw-bold">Descrição</h5>
                     <p class="mb-4"><?php echo nl2br(sanitize($anuncio['descricao'] ?? '')); ?></p>
 
                     <div class="row g-3">
+                        <?php if (($anuncio['tipo'] ?? '') === 'doacao'): ?>
+                            <?php if (!empty($anuncio['idade']) || $anuncio['idade'] === 0 || $anuncio['idade'] === '0'): ?>
+                                <div class="col-md-6">
+                                    <div class="info-box">
+                                        <span class="info-label">Idade</span>
+                                        <span class="info-value"><?php echo (int)$anuncio['idade']; ?> ano(s)</span>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+                            <?php if (!empty($anuncio['castrado']) || $anuncio['castrado'] === 0 || $anuncio['castrado'] === '0'): ?>
+                                <div class="col-md-6">
+                                    <div class="info-box">
+                                        <span class="info-label">Castrado</span>
+                                        <span class="info-value"><?php echo ((string)$anuncio['castrado'] === '1') ? 'Sim' : 'Não'; ?></span>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+                            <?php if (!empty($anuncio['necessita_termo_responsabilidade'])): ?>
+                                <div class="col-12">
+                                    <div class="info-box">
+                                        <span class="info-label">Termo</span>
+                                        <span class="info-value">Necessita termo de responsabilidade</span>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+                            <?php if (!empty($anuncio['vacinas'])): ?>
+                                <div class="col-12">
+                                    <div class="info-box">
+                                        <span class="info-label">Vacinas / Observações</span>
+                                        <span class="info-value"><?php echo nl2br(sanitize($anuncio['vacinas'])); ?></span>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+                        <?php endif; ?>
                         <?php if (!empty($anuncio['raca'])): ?>
                             <div class="col-md-6">
                                 <div class="info-box">
@@ -169,6 +233,22 @@ include __DIR__ . '/../includes/header.php';
             <div class="card shadow-sm border-0">
                 <div class="card-body p-4">
                     <h5 class="fw-bold mb-3">Entre em contato</h5>
+
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        <a class="btn btn-outline-primary btn-sm" href="https://wa.me/?text=<?php echo rawurlencode($shareTitle . ' - ' . $shareUrl); ?>" target="_blank" rel="noopener">
+                            <i class="bi bi-whatsapp me-1"></i> Compartilhar
+                        </a>
+                        <a class="btn btn-outline-primary btn-sm" href="https://www.facebook.com/sharer/sharer.php?u=<?php echo rawurlencode($shareUrl); ?>" target="_blank" rel="noopener">
+                            <i class="bi bi-facebook me-1"></i> Facebook
+                        </a>
+                        <a class="btn btn-outline-primary btn-sm" href="https://twitter.com/intent/tweet?url=<?php echo rawurlencode($shareUrl); ?>&text=<?php echo rawurlencode($shareTitle); ?>" target="_blank" rel="noopener">
+                            <i class="bi bi-twitter-x me-1"></i> X
+                        </a>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="btnCopyLink">
+                            <i class="bi bi-link-45deg me-1"></i> Copiar link
+                        </button>
+                    </div>
+
                     <div class="list-group list-group-flush">
                         <div class="list-group-item px-0 d-flex align-items-center justify-content-between">
                             <div>
@@ -186,8 +266,24 @@ include __DIR__ . '/../includes/header.php';
                         <?php if (!empty($anuncio['email_contato'])): ?>
                             <div class="list-group-item px-0">
                                 <strong>Email</strong>
-                                <p class="mb-0 text-muted"><?php echo sanitize($anuncio['email_contato']); ?></p>
-                                <a class="btn btn-outline-primary btn-sm mt-2" href="mailto:<?php echo sanitize($anuncio['email_contato']); ?>">Enviar email</a>
+                                <?php
+                                    $emailContato = trim((string)$anuncio['email_contato']);
+                                    $emailContatoSafe = filter_var($emailContato, FILTER_VALIDATE_EMAIL) ? $emailContato : '';
+                                    $mailtoSubject = $shareTitle . ' - PetFinder';
+                                    $mailtoBody = "Olá! Vi este anúncio no PetFinder e gostaria de falar com você.\n\n" . $shareUrl;
+                                    $mailtoHref = $emailContatoSafe
+                                        ? ('mailto:' . $emailContatoSafe . '?subject=' . rawurlencode($mailtoSubject) . '&body=' . rawurlencode($mailtoBody))
+                                        : '';
+                                ?>
+                                <p class="mb-0 text-muted" id="emailContatoText"><?php echo sanitize($emailContato); ?></p>
+                                <?php if ($mailtoHref): ?>
+                                    <a class="btn btn-outline-primary btn-sm mt-2" href="<?php echo $mailtoHref; ?>">Enviar email</a>
+                                <?php else: ?>
+                                    <div class="text-muted small mt-2">E-mail inválido para envio automático.</div>
+                                <?php endif; ?>
+                                <button type="button" class="btn btn-outline-secondary btn-sm mt-2" id="btnCopyEmail">
+                                    Copiar e-mail
+                                </button>
                             </div>
                         <?php endif; ?>
                     </div>
@@ -205,6 +301,43 @@ include __DIR__ . '/../includes/header.php';
 </div>
 
 <style>
+
+.carousel-item {
+    background: #111;
+    position: relative;
+    overflow: hidden;
+}
+
+.carousel-blur-bg {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    filter: blur(18px);
+    transform: scale(1.12);
+    opacity: 0.95;
+    border-radius: inherit;
+}
+
+.carousel-photo {
+    position: relative;
+    z-index: 1;
+}
+
+.carousel-item img {
+    height: 420px;
+    width: 100%;
+    object-fit: contain;
+    object-position: center;
+    background: transparent;
+}
+
+@media (max-width: 768px) {
+    .carousel-item img {
+        height: 300px;
+    }
+}
+
 .info-box {
     background: #f8f9fa;
     border-radius: 10px;
@@ -234,6 +367,27 @@ include __DIR__ . '/../includes/header.php';
 </style>
 
 <script>
+document.getElementById('btnCopyLink')?.addEventListener('click', async function () {
+    try {
+        await navigator.clipboard.writeText(<?php echo json_encode($shareUrl); ?>);
+        alert('Link copiado!');
+    } catch (e) {
+        prompt('Copie o link:', <?php echo json_encode($shareUrl); ?>);
+    }
+});
+
+document.getElementById('btnCopyEmail')?.addEventListener('click', async function () {
+    const email = document.getElementById('emailContatoText')?.textContent?.trim();
+    if (!email) return;
+    try {
+        await navigator.clipboard.writeText(email);
+        alert('E-mail copiado!');
+    } catch (e) {
+        prompt('Copie o e-mail:', email);
+    }
+});
+
+let __petfinderDetalheMapInitialized = false;
 document.addEventListener('DOMContentLoaded', function () {
     const mapEl = document.getElementById('mapDetalhe');
     if (!mapEl || !window.L) {

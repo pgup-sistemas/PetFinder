@@ -42,8 +42,8 @@ include __DIR__ . '/../includes/header.php';
                                     </div>
                                 </div>
                             <?php endif; ?>
-                            <span class="badge tipo-badge <?php echo $favorito['tipo'] === 'perdido' ? 'bg-danger' : 'bg-success'; ?>">
-                                <?php echo $favorito['tipo'] === 'perdido' ? '🔴 Perdido' : '🟢 Encontrado'; ?>
+                            <span class="badge tipo-badge <?php echo $favorito['tipo'] === 'perdido' ? 'bg-danger' : ($favorito['tipo'] === 'doacao' ? 'bg-primary' : 'bg-success'); ?>">
+                                <?php echo $favorito['tipo'] === 'perdido' ? '🔴 Perdido' : ($favorito['tipo'] === 'doacao' ? '💙 Adoção' : '🟢 Encontrado'); ?>
                             </span>
                         </div>
                         <div class="card-body">
@@ -91,6 +91,7 @@ include __DIR__ . '/../includes/header.php';
 .anuncio-card img {
     height: 200px;
     object-fit: cover;
+    object-position: top center;
 }
 
 .tipo-badge {

@@ -1,0 +1,21 @@
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Certificates / keys
+*.p12
+*.pem
+*.key
+
+# Composer
+/vendor/
+
+# User uploads
+/uploads/
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

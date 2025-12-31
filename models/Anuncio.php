@@ -9,9 +9,45 @@ class Anuncio
 {
     private $db;
 
+    private static $columnsCache = null;
+
     public function __construct()
     {
         $this->db = getDB();
+    }
+
+    private function getColumns(): array
+    {
+        if (self::$columnsCache !== null) {
+            return self::$columnsCache;
+        }
+
+        try {
+            $rows = $this->db->fetchAll('SHOW COLUMNS FROM anuncios');
+            $cols = [];
+            foreach ($rows as $row) {
+                if (!empty($row['Field'])) {
+                    $cols[] = (string)$row['Field'];
+                }
+            }
+
+            self::$columnsCache = $cols;
+            return $cols;
+        } catch (Throwable $e) {
+            error_log('[Anuncio] Falha ao obter colunas da tabela anuncios: ' . $e->getMessage());
+            self::$columnsCache = [];
+            return [];
+        }
+    }
+
+    private function filterDataToExistingColumns(array $data): array
+    {
+        $columns = $this->getColumns();
+        if (empty($columns)) {
+            return $data;
+        }
+
+        return array_intersect_key($data, array_flip($columns));
     }
 
     /**
@@ -19,6 +55,7 @@ class Anuncio
      */
     public function create(array $data): int
     {
+        $data = $this->filterDataToExistingColumns($data);
         return $this->db->insert('anuncios', $data);
     }
 
@@ -27,6 +64,7 @@ class Anuncio
      */
     public function update(int $id, array $data)
     {
+        $data = $this->filterDataToExistingColumns($data);
         if (empty($data)) {
             return false;
         }
@@ -47,6 +85,22 @@ class Anuncio
             ],
             'id = ? AND usuario_id = ?',
             [$id, $usuarioId]
+        );
+    }
+
+    /**
+     * Soft delete administrativo: altera status para inativo.
+     */
+    public function softDeleteAsAdmin(int $id)
+    {
+        return $this->db->update(
+            'anuncios',
+            [
+                'status' => STATUS_INATIVO,
+                'data_atualizacao' => date('Y-m-d H:i:s')
+            ],
+            'id = ?',
+            [$id]
         );
     }
 
@@ -86,6 +140,20 @@ class Anuncio
             'SELECT a.*, u.nome as usuario_nome, u.telefone, u.email
              FROM anuncios a
              JOIN usuarios u ON a.usuario_id = u.id
+             WHERE a.id = ? AND a.status IN (?, ?)',
+            [$id, STATUS_ATIVO, STATUS_RESOLVIDO]
+        );
+    }
+
+    /**
+     * Busca anúncio por ID (incluindo status inativo/bloqueado) para uso interno.
+     */
+    public function findByIdAnyStatus(int $id)
+    {
+        return $this->db->fetchOne(
+            'SELECT a.*, u.nome as usuario_nome, u.telefone, u.email
+             FROM anuncios a
+             JOIN usuarios u ON a.usuario_id = u.id
              WHERE a.id = ?',
             [$id]
         );
@@ -94,16 +162,24 @@ class Anuncio
     /**
      * Lista anúncios do usuário (inclui foto principal).
      */
-    public function findByUser(int $usuarioId, int $limit = 50, int $offset = 0)
+    public function findByUser(int $usuarioId, int $limit = 50, int $offset = 0, ?string $status = null)
     {
+        $where = ['a.usuario_id = ?'];
+        $params = [$usuarioId];
+
+        if (!empty($status)) {
+            $where[] = 'a.status = ?';
+            $params[] = $status;
+        }
+
         return $this->db->fetchAll(
             "SELECT a.*,
                     (SELECT nome_arquivo FROM fotos_anuncios f WHERE f.anuncio_id = a.id ORDER BY ordem LIMIT 1) AS foto
              FROM anuncios a
-             WHERE a.usuario_id = ?
+             WHERE " . implode(' AND ', $where) . "
              ORDER BY a.data_publicacao DESC
              LIMIT ? OFFSET ?",
-            [$usuarioId, $limit, $offset]
+            array_merge($params, [$limit, $offset])
         );
     }
 
@@ -185,9 +261,8 @@ class Anuncio
             $where[] = 'a.status = ?';
             $params[] = $filtros['status'];
         } else {
-            $where[] = 'a.status IN (?, ?)';
+            $where[] = 'a.status = ?';
             $params[] = STATUS_ATIVO;
-            $params[] = STATUS_RESOLVIDO;
         }
 
         if (!empty($filtros['tipo'])) {

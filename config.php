@@ -237,8 +237,14 @@ define('STATUS_INATIVO', 'inativo');
 define('STATUS_BLOQUEADO', 'bloqueado');
 define('STATUS_EXPIRADO', 'expirado');
 
+define('MSG_SUCCESS', 'success');
+define('MSG_ERROR', 'error');
+define('MSG_WARNING', 'warning');
+define('MSG_INFO', 'info');
+
 define('TIPO_PERDIDO', 'perdido');
 define('TIPO_ENCONTRADO', 'encontrado');
+define('TIPO_DOACAO', 'doacao');
 
 define('ESPECIE_CACHORRO', 'cachorro');
 define('ESPECIE_GATO', 'gato');
@@ -250,18 +256,23 @@ define('TAMANHO_MEDIO', 'medio');
 define('TAMANHO_GRANDE', 'grande');
 
 // ═══════════════════════════════════════════════
-// MENSAGENS DO SISTEMA
-// ═══════════════════════════════════════════════
-define('MSG_SUCCESS', 'success');
-define('MSG_ERROR', 'error');
-define('MSG_WARNING', 'warning');
-define('MSG_INFO', 'info');
-
-// ═══════════════════════════════════════════════
 // VERIFICAÇÃO DE AMBIENTE
 // ═══════════════════════════════════════════════
 if (!is_writable(UPLOAD_PATH)) {
     die('ERRO: O diretório de uploads não tem permissão de escrita!');
+}
+
+if (php_sapi_name() !== 'cli') {
+    try {
+        $todayKey = 'expire_ads_ran_' . date('Ymd');
+        if (empty($_SESSION[$todayKey])) {
+            $_SESSION[$todayKey] = true;
+            $anuncioModel = new Anuncio();
+            $anuncioModel->expireOldAds();
+        }
+    } catch (Throwable $e) {
+        error_log('[PetFinder] expireOldAds: ' . $e->getMessage());
+    }
 }
 
 // ═══════════════════════════════════════════════

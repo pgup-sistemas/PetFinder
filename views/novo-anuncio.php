@@ -18,8 +18,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!validateCSRFToken($_POST['csrf_token'] ?? '')) {
         $errors[] = 'Erro de validação do formulário. Atualize a página e tente novamente.';
     } else {
+        $handledPhotoRemoval = false;
+
+        $postToPersist = $_POST;
+        unset($postToPersist['remove_photo_index']);
+
+        if (isset($_POST['tipo']) && $_POST['tipo'] !== '') {
+            $postToPersist['tipo'] = $_POST['tipo'];
+        }
+
         // Salva dados na sessão para multi-step
-        $_SESSION['anuncio_temp'] = array_merge($_SESSION['anuncio_temp'] ?? [], $_POST);
+        $_SESSION['anuncio_temp'] = array_merge($_SESSION['anuncio_temp'] ?? [], $postToPersist);
+
+        if (isset($_POST['remove_photo_index'])) {
+            $removeIndex = (int)$_POST['remove_photo_index'];
+            if (isset($_SESSION['anuncio_temp_fotos'][$removeIndex])) {
+                $toRemove = $_SESSION['anuncio_temp_fotos'][$removeIndex];
+
+                if (!empty($toRemove['path']) && file_exists($toRemove['path'])) {
+                    @unlink($toRemove['path']);
+                }
+
+                array_splice($_SESSION['anuncio_temp_fotos'], $removeIndex, 1);
+            }
+
+            $step = 2;
+            $handledPhotoRemoval = true;
+        }
 
         if (!empty($_FILES['fotos']) && is_array($_FILES['fotos']['name'])) {
             $hasUpload = false;
@@ -77,12 +102,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        if (isset($_POST['finalizar'])) {
+        if ($handledPhotoRemoval) {
+            // Não avança automaticamente ao remover foto.
+        } elseif (isset($_POST['finalizar'])) {
             $files = $_FILES;
             $hasFiles = !empty($files['fotos']) && is_array($files['fotos']['name']) && count(array_filter($files['fotos']['name'])) > 0;
 
             if (!$hasFiles && !empty($_SESSION['anuncio_temp_fotos'])) {
                 $validSessionFotos = [];
+
                 foreach ($_SESSION['anuncio_temp_fotos'] as $foto) {
                     if (!empty($foto['path']) && file_exists($foto['path'])) {
                         $validSessionFotos[] = $foto;
@@ -120,7 +148,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // (ex.: cache de fotos expirado)
                 $result = ['success' => false];
             } else {
-                $result = $controller->create($_SESSION['anuncio_temp'], $files);
+                $payloadToCreate = $_SESSION['anuncio_temp'] ?? [];
+                if (empty($payloadToCreate['tipo']) && !empty($_POST['tipo'])) {
+                    $payloadToCreate['tipo'] = $_POST['tipo'];
+                }
+
+                $result = $controller->create($payloadToCreate, $files);
             }
 
             if (!empty($result['success'])) {
@@ -223,6 +256,9 @@ include __DIR__ . '/../includes/header.php';
                     
                     <form method="POST" enctype="multipart/form-data" id="anuncioForm">
                         <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
+                        <?php if ($step != 1): ?>
+                            <input type="hidden" name="tipo" id="tipo_hidden" value="<?php echo sanitize($formData['tipo'] ?? ''); ?>">
+                        <?php endif; ?>
                         
                         <?php if ($step == 1): ?>
                             <!-- PASSO 1: Tipo -->
@@ -259,6 +295,21 @@ include __DIR__ . '/../includes/header.php';
                                             <p class="mb-0 small">Encontrei um animal perdido</p>
                                         </label>
                                     </div>
+
+                                    <div class="col-12">
+                                        <input type="radio" 
+                                               class="btn-check" 
+                                               name="tipo" 
+                                               id="tipo_doacao" 
+                                               value="doacao"
+                                               <?php echo ($formData['tipo'] ?? '') === 'doacao' ? 'checked' : ''; ?>
+                                               required>
+                                        <label class="btn btn-tipo btn-outline-primary w-100 p-4" for="tipo_doacao">
+                                            <div class="tipo-icon">💙</div>
+                                            <h4>PET PARA ADOÇÃO</h4>
+                                            <p class="mb-0 small">Estou disponibilizando um pet para adoção e procuro um lar responsável</p>
+                                        </label>
+                                    </div>
                                 </div>
                                 
                                 <div class="text-end mt-4">
@@ -285,9 +336,16 @@ include __DIR__ . '/../includes/header.php';
                                         </div>
 
                                         <div class="d-flex gap-2 flex-wrap mb-3">
-                                            <?php foreach ($_SESSION['anuncio_temp_fotos'] as $foto): ?>
+                                            <?php foreach ($_SESSION['anuncio_temp_fotos'] as $idx => $foto): ?>
                                                 <?php if (!empty($foto['relative']) && !empty($foto['path']) && file_exists($foto['path'])): ?>
-                                                    <img src="<?php echo BASE_URL; ?>/uploads/<?php echo sanitize($foto['relative']); ?>" alt="Foto" style="width: 96px; height: 96px; object-fit: cover; border-radius: 12px;">
+                                                    <div class="position-relative" style="width: 96px; height: 96px;">
+                                                        <img src="<?php echo BASE_URL; ?>/uploads/<?php echo sanitize($foto['relative']); ?>" alt="Foto" style="width: 96px; height: 96px; object-fit: cover; border-radius: 12px;">
+                                                        <form method="POST" class="position-absolute" style="top: -8px; right: -8px;">
+                                                            <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
+                                                            <input type="hidden" name="remove_photo_index" value="<?php echo (int)$idx; ?>">
+                                                            <button type="submit" class="btn btn-danger btn-sm" style="border-radius: 999px; width: 28px; height: 28px; padding: 0; line-height: 1;">×</button>
+                                                        </form>
+                                                    </div>
                                                 <?php endif; ?>
                                             <?php endforeach; ?>
                                         </div>
@@ -408,6 +466,50 @@ include __DIR__ . '/../includes/header.php';
                                               placeholder="Características, marcas, comportamento..."><?php echo sanitize($formData['descricao'] ?? ''); ?></textarea>
                                     <small class="text-muted">Mínimo 20 caracteres</small>
                                 </div>
+
+                                <?php $isDoacao = (($formData['tipo'] ?? '') === 'doacao'); ?>
+                                <div id="doacaoFields" style="<?php echo $isDoacao ? '' : 'display:none;'; ?>">
+                                    <hr class="my-4">
+                                    <h5 class="mb-3">Informações para adoção</h5>
+
+                                    <div class="row">
+                                        <div class="col-md-4 mb-3">
+                                            <label for="idade" class="form-label">Idade (anos)</label>
+                                            <input type="number" 
+                                                   class="form-control" 
+                                                   id="idade" 
+                                                   name="idade"
+                                                   min="0"
+                                                   max="60"
+                                                   value="<?php echo sanitize($formData['idade'] ?? ''); ?>"
+                                                   placeholder="Ex: 2">
+                                        </div>
+
+                                        <div class="col-md-4 mb-3">
+                                            <label for="castrado" class="form-label">Castrado?</label>
+                                            <select class="form-select" id="castrado" name="castrado">
+                                                <?php $castrado = $formData['castrado'] ?? ''; ?>
+                                                <option value="" <?php echo ($castrado === '' ? 'selected' : ''); ?>>Não informado</option>
+                                                <option value="1" <?php echo ($castrado === '1' ? 'selected' : ''); ?>>Sim</option>
+                                                <option value="0" <?php echo ($castrado === '0' ? 'selected' : ''); ?>>Não</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="col-md-4 mb-3 d-flex align-items-end">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" value="1" id="necessita_termo_responsabilidade" name="necessita_termo_responsabilidade" <?php echo !empty($formData['necessita_termo_responsabilidade']) ? 'checked' : ''; ?>>
+                                                <label class="form-check-label" for="necessita_termo_responsabilidade">
+                                                    Exigir termo de responsabilidade
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="vacinas" class="form-label">Vacinas / Observações</label>
+                                        <textarea class="form-control" id="vacinas" name="vacinas" rows="3" placeholder="Ex: V8 em dia, vermifugado..."><?php echo sanitize($formData['vacinas'] ?? ''); ?></textarea>
+                                    </div>
+                                </div>
                                 
                                 <div class="d-flex justify-content-between">
                                     <button type="submit" name="next_step" value="1" class="btn btn-secondary">
@@ -448,13 +550,13 @@ include __DIR__ . '/../includes/header.php';
                                                id="cep" 
                                                name="cep"
                                                inputmode="numeric"
-                                               pattern="\d*"
+                                               pattern="[0-9]{5}-?[0-9]{3}"
                                                data-mask="cep"
                                                placeholder="00000-000"
                                                maxlength="9"
                                                value="<?php echo sanitize($formData['cep'] ?? ''); ?>">
                                         
-                                        <button class="btn btn-outline-primary" type="button" id="btn-buscar-cep" onclick="buscarCEP()">
+                                        <button class="btn btn-outline-primary" type="button" id="btn-buscar-cep" onclick="buscarCEPForm()">
                                             Buscar
                                         </button>
                                         <button class="btn btn-outline-secondary" type="button" id="btn-gps" onclick="usarGPS()">
@@ -593,6 +695,15 @@ include __DIR__ . '/../includes/header.php';
 </div>
 
 <style>
+#doacaoFields {
+    display: none;
+}
+
+#doacaoFields[style*="display: block"],
+#doacaoFields[style*="display:block"] {
+    display: block !important;
+}
+
 .stepper {
     position: relative;
 }
@@ -741,6 +852,98 @@ include __DIR__ . '/../includes/header.php';
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    console.log('DOM carregado, configurando campos de adoção...');
+    
+    const tipoInputs = document.querySelectorAll('input[name="tipo"]');
+
+    function getTipoSelecionado() {
+        const selectedRadio = document.querySelector('input[name="tipo"]:checked');
+        if (selectedRadio && selectedRadio.value) {
+            return selectedRadio.value;
+        }
+
+        const hiddenTipo = document.querySelector('input[name="tipo"]#tipo_hidden');
+        if (hiddenTipo && hiddenTipo.value) {
+            return hiddenTipo.value;
+        }
+
+        return '';
+    }
+    
+    function refreshDoacaoFields() {
+        console.log('Atualizando campos de adoção...');
+
+        const doacaoFields = document.getElementById('doacaoFields');
+        if (!doacaoFields) {
+            // O bloco de campos de adoção só existe no passo 2.
+            return;
+        }
+        
+        const tipoSelecionado = getTipoSelecionado();
+        console.log('Tipo selecionado:', tipoSelecionado || 'nenhum');
+        
+        // Verifica se o tipo selecionado é 'doacao'
+        const isDoacao = tipoSelecionado === 'doacao';
+        console.log('É doação?', isDoacao);
+        
+        // Atualiza a visibilidade dos campos de doação
+        if (isDoacao) {
+            doacaoFields.style.display = 'block';
+            doacaoFields.style.visibility = 'visible';
+            doacaoFields.style.opacity = '1';
+            doacaoFields.style.height = 'auto';
+            doacaoFields.style.overflow = 'visible';
+        } else {
+            doacaoFields.style.display = 'none';
+            doacaoFields.style.visibility = 'hidden';
+            doacaoFields.style.opacity = '0';
+            doacaoFields.style.height = '0';
+            doacaoFields.style.overflow = 'hidden';
+        }
+        
+        console.log('Visibilidade dos campos de doação:', doacaoFields.style.display);
+    }
+
+    // Adiciona o evento de mudança a todos os radios de tipo
+    tipoInputs.forEach(function (el) {
+        el.addEventListener('change', function () {
+            console.log('Tipo alterado para:', this.value);
+            refreshDoacaoFields();
+        });
+    });
+    
+    // Força uma atualização inicial
+    console.log('Forçando atualização inicial dos campos de doação...');
+    refreshDoacaoFields();
+    
+    // Adiciona um listener para o evento de submit do formulário
+    const form = document.getElementById('anuncioForm');
+    if (form) {
+        form.addEventListener('submit', function() {
+            const formData = new FormData(form);
+            console.log('=== DADOS DO FORMULÁRIO ===');
+            console.log('Tipo selecionado:', getTipoSelecionado() || 'nenhum');
+            console.log('Todos os dados do formulário:');
+            
+            // Exibe todos os pares chave/valor do formulário
+            for (let [key, value] of formData.entries()) {
+                console.log(`${key}: ${value}`);
+            }
+            
+            // Verifica se o tipo é 'doacao' e se os campos de doação estão preenchidos
+            const tipo = formData.get('tipo');
+            if (tipo === 'doacao') {
+                console.log('=== CAMPOS DE DOAÇÃO ===');
+                console.log('Idade:', formData.get('idade'));
+                console.log('Castrado:', formData.get('castrado'));
+                console.log('Vacinas:', formData.get('vacinas'));
+                console.log('Termo de responsabilidade:', formData.get('necessita_termo_responsabilidade'));
+            }
+            
+            console.log('==========================');
+        });
+    }
+
     if (document.getElementById('mapPicker') && window.PetFinderMap) {
         window.__petfinderMapPicker = window.PetFinderMap.init({
             containerId: 'mapPicker',
@@ -776,14 +979,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
             cepAutoLookupTimer = setTimeout(function () {
                 lastCepLookedUp = digits;
-                buscarCEP();
+                buscarCEPForm();
             }, 450);
         });
 
         cepInput.addEventListener('keydown', function (event) {
             if (event.key === 'Enter') {
                 event.preventDefault();
-                buscarCEP();
+                buscarCEPForm();
             }
         });
     }
@@ -824,10 +1027,17 @@ document.getElementById('fotos')?.addEventListener('change', function(e) {
 });
 
 // Buscar CEP
-async function buscarCEP() {
+async function buscarCEPForm() {
     const cepInput = document.getElementById('cep');
     const cepButton = document.getElementById('btn-buscar-cep');
-    const cep = cepInput.value.replace(/\D/g, '');
+    
+    // Verifica se os elementos existem
+    if (!cepInput || !cepButton) {
+        console.error('Elementos do CEP não encontrados');
+        return;
+    }
+    
+    const cep = (cepInput.value || '').replace(/\D/g, '');
 
     if (cep.length !== 8) {
         alert('Informe um CEP válido com 8 dígitos.');
@@ -937,6 +1147,21 @@ function onGeolocationError(error) {
     };
 
     alert(mensagens[error.code] || 'Não foi possível obter sua localização.');
+}
+
+// Função para remover foto do preview
+function removePhoto(index) {
+    const input = document.getElementById('fotos');
+    const files = Array.from(input.files);
+    files.splice(index, 1);
+    
+    // Atualiza o input de arquivo
+    const dataTransfer = new DataTransfer();
+    files.forEach(file => dataTransfer.items.add(file));
+    input.files = dataTransfer.files;
+    
+    // Dispara o evento change para atualizar o preview
+    input.dispatchEvent(new Event('change'));
 }
 
 function preencherCamposEndereco(data = {}, opcoes = {}) {

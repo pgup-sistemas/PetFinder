@@ -49,6 +49,7 @@ include __DIR__ . '/../includes/header.php';
                                 <option value="">Todos</option>
                                 <option value="perdido" <?php echo (($filters['tipo'] ?? '') === 'perdido') ? 'selected' : ''; ?>>🔴 Perdidos</option>
                                 <option value="encontrado" <?php echo (($filters['tipo'] ?? '') === 'encontrado') ? 'selected' : ''; ?>>🟢 Encontrados</option>
+                                <option value="doacao" <?php echo (($filters['tipo'] ?? '') === 'doacao') ? 'selected' : ''; ?>>💙 Adoção</option>
                             </select>
                         </div>
 
@@ -172,8 +173,8 @@ include __DIR__ . '/../includes/header.php';
                                                     </div>
                                                 </div>
                                             <?php endif; ?>
-                                            <span class="badge tipo-badge <?php echo $anuncio['tipo'] === 'perdido' ? 'bg-danger' : 'bg-success'; ?>">
-                                                <?php echo $anuncio['tipo'] === 'perdido' ? ' Perdido' : ' Encontrado'; ?>
+                                            <span class="badge tipo-badge <?php echo $anuncio['tipo'] === 'perdido' ? 'bg-danger' : ($anuncio['tipo'] === 'doacao' ? 'bg-primary' : 'bg-success'); ?>">
+                                                <?php echo $anuncio['tipo'] === 'perdido' ? ' Perdido' : ($anuncio['tipo'] === 'doacao' ? ' Adoção' : ' Encontrado'); ?>
                                             </span>
                                         </div>
                                         <div class="card-body">
@@ -249,6 +250,7 @@ include __DIR__ . '/../includes/header.php';
 .anuncio-card img {
     height: 200px;
     object-fit: cover;
+    object-position: top center;
 }
 
 .tipo-badge {

@@ -8,7 +8,11 @@ requireLogin();
 $anuncioModel = new Anuncio();
 $usuarioId = (int)getUserId();
 
-$anuncios = $anuncioModel->findByUser($usuarioId, 100, 0);
+$statusFiltro = isset($_GET['status']) ? (string)$_GET['status'] : '';
+$statusPermitidos = [STATUS_ATIVO, STATUS_RESOLVIDO, STATUS_EXPIRADO];
+$statusSelecionado = in_array($statusFiltro, $statusPermitidos, true) ? $statusFiltro : STATUS_ATIVO;
+
+$anuncios = $anuncioModel->findByUser($usuarioId, 100, 0, $statusSelecionado);
 
 include __DIR__ . '/../includes/header.php';
 ?>
@@ -21,18 +25,42 @@ include __DIR__ . '/../includes/header.php';
         </a>
     </div>
 
+    <ul class="nav nav-tabs mb-4">
+        <li class="nav-item">
+            <a class="nav-link <?php echo $statusSelecionado === STATUS_ATIVO ? 'active' : ''; ?>" href="<?php echo BASE_URL; ?>/meus-anuncios.php?status=<?php echo urlencode(STATUS_ATIVO); ?>">
+                Ativos
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link <?php echo $statusSelecionado === STATUS_RESOLVIDO ? 'active' : ''; ?>" href="<?php echo BASE_URL; ?>/meus-anuncios.php?status=<?php echo urlencode(STATUS_RESOLVIDO); ?>">
+                Resolvidos
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link <?php echo $statusSelecionado === STATUS_EXPIRADO ? 'active' : ''; ?>" href="<?php echo BASE_URL; ?>/meus-anuncios.php?status=<?php echo urlencode(STATUS_EXPIRADO); ?>">
+                Expirados
+            </a>
+        </li>
+    </ul>
+
     <?php if (empty($anuncios)): ?>
         <div class="alert alert-info">
-            Você ainda não publicou nenhum anúncio.
-            <a href="<?php echo BASE_URL; ?>/novo-anuncio.php" class="alert-link">Publicar agora</a>
+            <?php if ($statusSelecionado === STATUS_RESOLVIDO): ?>
+                Você ainda não tem anúncios resolvidos.
+            <?php elseif ($statusSelecionado === STATUS_EXPIRADO): ?>
+                Você ainda não tem anúncios expirados.
+            <?php else: ?>
+                Você ainda não publicou nenhum anúncio.
+                <a href="<?php echo BASE_URL; ?>/novo-anuncio.php" class="alert-link">Publicar agora</a>
+            <?php endif; ?>
         </div>
     <?php else: ?>
         <div class="row g-4">
             <?php foreach ($anuncios as $anuncio): ?>
                 <div class="col-md-6 col-lg-4">
-                    <div class="card h-100 shadow-sm border-0">
+                    <div class="anuncio-card card h-100 shadow-sm border-0">
                         <?php if (!empty($anuncio['foto'])): ?>
-                            <img src="<?php echo BASE_URL; ?>/uploads/anuncios/<?php echo sanitize($anuncio['foto']); ?>" class="card-img-top" alt="Foto" style="height: 200px; object-fit: cover;">
+                            <img src="<?php echo BASE_URL; ?>/uploads/anuncios/<?php echo sanitize($anuncio['foto']); ?>" class="card-img-top" alt="Foto">
                         <?php else: ?>
                             <div class="d-flex align-items-center justify-content-center bg-light" style="height: 200px;">
                                 <div class="text-center text-muted">
@@ -45,8 +73,8 @@ include __DIR__ . '/../includes/header.php';
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-start">
                                 <div>
-                                    <div class="badge bg-<?php echo $anuncio['tipo'] === 'perdido' ? 'danger' : 'success'; ?> mb-2">
-                                        <?php echo $anuncio['tipo'] === 'perdido' ? 'Perdido' : 'Encontrado'; ?>
+                                    <div class="badge bg-<?php echo $anuncio['tipo'] === 'perdido' ? 'danger' : ($anuncio['tipo'] === 'doacao' ? 'primary' : 'success'); ?> mb-2">
+                                        <?php echo $anuncio['tipo'] === 'perdido' ? 'Perdido' : ($anuncio['tipo'] === 'doacao' ? 'Adoção' : 'Encontrado'); ?>
                                     </div>
                                     <h5 class="card-title mb-1">
                                         <?php echo sanitize($anuncio['nome_pet'] ?: ('Pet ' . ucfirst($anuncio['especie']))); ?>
@@ -67,6 +95,25 @@ include __DIR__ . '/../includes/header.php';
                                 <a class="btn btn-primary btn-sm flex-grow-1" href="<?php echo BASE_URL; ?>/editar-anuncio.php?id=<?php echo (int)$anuncio['id']; ?>">
                                     Editar
                                 </a>
+                                <?php if (($anuncio['status'] ?? '') === STATUS_ATIVO): ?>
+                                    <form method="POST" action="<?php echo BASE_URL; ?>/marcar-resolvido.php" class="flex-grow-1" onsubmit="return confirm('Marcar este anúncio como resolvido?');">
+                                        <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
+                                        <input type="hidden" name="anuncio_id" value="<?php echo (int)$anuncio['id']; ?>">
+                                        <input type="hidden" name="return_to" value="/meus-anuncios.php">
+                                        <button type="submit" class="btn btn-outline-success btn-sm w-100">
+                                            Resolver
+                                        </button>
+                                    </form>
+                                <?php endif; ?>
+                                <?php if (($anuncio['status'] ?? '') !== STATUS_INATIVO): ?>
+                                    <form method="POST" action="<?php echo BASE_URL; ?>/excluir-anuncio.php" class="flex-grow-1" onsubmit="return confirm('Tem certeza que deseja excluir este anúncio? Ele deixará de aparecer nas buscas.');">
+                                        <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
+                                        <input type="hidden" name="anuncio_id" value="<?php echo (int)$anuncio['id']; ?>">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm w-100">
+                                            Excluir
+                                        </button>
+                                    </form>
+                                <?php endif; ?>
                             </div>
                         </div>
 

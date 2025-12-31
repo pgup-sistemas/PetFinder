@@ -152,7 +152,7 @@ document.addEventListener('input', function(e) {
 // BUSCA VIA CEP
 // ═══════════════════════════════════════════════
 async function buscarCEP(cep) {
-    cep = cep.replace(/\D/g, '');
+    cep = (cep || '').toString().replace(/\D/g, '');
     
     if (cep.length !== 8) {
         showToast('CEP inválido', 'error');

@@ -63,6 +63,7 @@ class Auth {
                 'senha' => hashPassword($data['senha']),
                 'cidade' => $data['cidade'] ?? null,
                 'estado' => $data['estado'] ?? null,
+                'tipo_usuario' => 'comum',
                 'token_confirmacao' => $token,
                 'data_cadastro' => date('Y-m-d H:i:s')
             ]);

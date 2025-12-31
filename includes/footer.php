@@ -85,7 +85,7 @@
                     <h6 class="mb-3">Precisa de Ajuda?</h6>
                     <ul class="list-unstyled text-light-gray">
                         <li class="mb-2"><i class="bi bi-envelope me-2"></i> suporte@petfinder.com</li>
-                        <li class="mb-2"><i class="bi bi-whatsapp me-2"></i> (69) 99999-9999</li>
+                        <li class="mb-2"><i class="bi bi-whatsapp me-2"></i> (69) 99388-2222</li>
                         <li class="mb-2"><i class="bi bi-clock me-2"></i> Seg - Sex, 9h às 18h</li>
                     </ul>
                 </div>
