@@ -57,6 +57,59 @@ class DoacaoController
                 return ['success' => true, 'id' => $doacaoId, 'redirect' => '/doacao-pix?id=' . $doacaoId];
             }
 
+            if ($metodo === 'cartao_avista') {
+                $pagamentoController = new PagamentoController();
+                $resp = $pagamentoController->criarLinkPagamentoDoacao((int)$doacaoId, (float)($payload['valor'] ?? 0), 'cartao_avista');
+                $paymentUrl = (string)($resp['data']['payment_url'] ?? ($resp['payment_url'] ?? ''));
+                $chargeId = (string)($resp['data']['charge_id'] ?? ($resp['data']['charge']['id'] ?? ''));
+
+                $this->doacaoModel->updateStatus(
+                    (int)$doacaoId,
+                    'pendente',
+                    [
+                        'gateway' => 'efi',
+                        'payment_url' => $paymentUrl !== '' ? $paymentUrl : null,
+                        'efi_charge_id' => $chargeId !== '' ? $chargeId : null,
+                    ]
+                );
+
+                if ($paymentUrl !== '') {
+                    return ['success' => true, 'id' => $doacaoId, 'redirect' => $paymentUrl];
+                }
+
+                throw new Exception('Não foi possível gerar o link de pagamento do cartão.');
+            }
+
+            if ($metodo === 'cartao_recorrente') {
+                $usuarioId = (int)(getUserId() ?? 0);
+                $pagamentoController = new PagamentoController();
+                $resp = $pagamentoController->criarAssinaturaCartaoDoacao($usuarioId, (int)$doacaoId, (float)($payload['valor'] ?? 0));
+
+                $paymentUrl = (string)($resp['data']['payment_url'] ?? '');
+                $subscriptionId = (string)($resp['data']['subscription_id'] ?? '');
+                $chargeId = (string)($resp['data']['charge']['id'] ?? ($resp['data']['charge_id'] ?? ''));
+                $planId = (int)($resp['_petfinder_plan_id'] ?? 0);
+
+                $this->doacaoModel->updateStatus(
+                    (int)$doacaoId,
+                    'pendente',
+                    [
+                        'gateway' => 'efi',
+                        'payment_url' => $paymentUrl !== '' ? $paymentUrl : null,
+                        'efi_subscription_id' => $subscriptionId !== '' ? $subscriptionId : null,
+                        'efi_charge_id' => $chargeId !== '' ? $chargeId : null,
+                        'efi_plan_id' => $planId > 0 ? $planId : null,
+                        'proxima_cobranca' => date('Y-m-d', strtotime('+30 days')),
+                    ]
+                );
+
+                if ($paymentUrl !== '') {
+                    return ['success' => true, 'id' => $doacaoId, 'redirect' => $paymentUrl];
+                }
+
+                throw new Exception('Não foi possível gerar o link de pagamento do cartão recorrente.');
+            }
+
             return ['success' => true, 'id' => $doacaoId];
         } catch (Exception $e) {
             error_log('[DoacaoController] Erro ao registrar doação: ' . $e->getMessage());
@@ -100,12 +153,17 @@ class DoacaoController
             $erros[] = 'Selecione um método de pagamento.';
         } else {
             $metodo = strtolower((string)$dados['metodo_pagamento']);
-            if ($metodo !== 'pix') {
-                $erros[] = 'Método de pagamento ainda não disponível. Utilize Pix.';
+            $validMetodos = ['pix', 'cartao_avista', 'cartao_recorrente'];
+            if (!in_array($metodo, $validMetodos, true)) {
+                $erros[] = 'Método de pagamento inválido.';
             }
 
-            if (!empty($dados['recorrente']) && $metodo === 'pix') {
-                $erros[] = 'Doação mensal ainda não está disponível via Pix. Selecione doação única.';
+            if (!empty($dados['recorrente']) && $metodo !== 'cartao_recorrente') {
+                $erros[] = 'Para doação mensal, use Cartão (mensal).';
+            }
+
+            if ($metodo === 'cartao_recorrente' && !isLoggedIn()) {
+                $erros[] = 'Para doação mensal é necessário estar logado.';
             }
         }
 
@@ -129,11 +187,14 @@ class DoacaoController
         $usuarioId = getUserId();
         $valor = (float)$dados['valor'];
 
+        $metodo = strtolower((string)($dados['metodo_pagamento'] ?? 'pix'));
+        $isRecorrente = !empty($dados['recorrente']) || $metodo === 'cartao_recorrente';
+
         $payload = [
             'usuario_id' => $usuarioId ?: null,
             'valor' => $valor,
-            'tipo' => !empty($dados['recorrente']) ? 'mensal' : 'unica',
-            'metodo_pagamento' => $dados['metodo_pagamento'],
+            'tipo' => $isRecorrente ? 'mensal' : 'unica',
+            'metodo_pagamento' => $metodo,
             'gateway' => $dados['gateway'] ?? 'manual',
             'nome_doador' => $dados['nome_doador'] ?? null,
             'email_doador' => $dados['email_doador'] ?? null,

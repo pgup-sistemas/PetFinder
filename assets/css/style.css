@@ -422,6 +422,256 @@ body {
 }
 
 /* ═══════════════════════════════════════════════ */
+/* PARCEIROS */
+/* ═══════════════════════════════════════════════ */
+.partners-hero {
+    background: radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.20) 0%, rgba(255, 255, 255, 0) 45%),
+        linear-gradient(135deg, #6A11CB 0%, #2575FC 35%, #36D1DC 100%);
+    color: white;
+    padding: 56px 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.partners-hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 80% 30%, rgba(255, 193, 7, 0.22) 0%, rgba(255, 193, 7, 0) 55%);
+    pointer-events: none;
+}
+
+.partners-hero-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    font-weight: 600;
+}
+
+.partners-hero-card {
+    background: rgba(255, 255, 255, 0.96);
+    color: var(--dark);
+    border-radius: var(--radius-xl);
+    padding: 22px;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    position: relative;
+    z-index: 1;
+}
+
+.partners-hero-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(33, 150, 243, 0.12);
+    color: var(--primary);
+    font-size: 1.2em;
+}
+
+.partners-hero-list {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+.partners-hero-list li {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 8px 0;
+    color: var(--gray);
+}
+
+.partners-hero-list i {
+    color: var(--success);
+    margin-top: 2px;
+}
+
+.btn-partners-primary {
+    background: linear-gradient(135deg, var(--primary) 0%, #36D1DC 100%);
+    border: none;
+    color: white;
+    font-weight: 700;
+    border-radius: var(--radius-lg);
+    box-shadow: 0 12px 24px rgba(0, 188, 212, 0.25);
+}
+
+.btn-partners-primary:hover {
+    filter: brightness(0.95);
+    color: white;
+}
+
+.partner-category-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 22px;
+    box-shadow: var(--shadow-sm);
+    height: 100%;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+    position: relative;
+    overflow: hidden;
+}
+
+.partner-category-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 0% 0%, rgba(33, 150, 243, 0.12) 0%, rgba(33, 150, 243, 0) 55%);
+    pointer-events: none;
+}
+
+.partner-category-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+}
+
+.partner-category-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(0, 188, 212, 0.18) 0%, rgba(33, 150, 243, 0.18) 100%);
+    color: #0D6EFD;
+    font-size: 1.35em;
+    margin-bottom: 14px;
+    box-shadow: 0 10px 20px rgba(33, 150, 243, 0.12);
+}
+
+.partners-directory {
+    background: var(--bg-light);
+}
+
+.partner-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    transition: transform var(--transition-normal), box-shadow var(--transition-normal), border-color var(--transition-normal);
+}
+
+.partner-card:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--shadow-lg);
+    border-color: rgba(33, 150, 243, 0.35);
+}
+
+.partner-card-highlight {
+    border: 2px solid rgba(255, 193, 7, 0.45);
+    box-shadow: 0 14px 34px rgba(255, 193, 7, 0.18);
+}
+
+.partner-card-ribbon {
+    position: absolute;
+    top: 12px;
+    left: -40px;
+    background: linear-gradient(135deg, #FF9800 0%, #FFC107 55%, #FF4D4D 100%);
+    color: white;
+    padding: 6px 40px;
+    font-weight: 700;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    transform: rotate(-45deg);
+    box-shadow: var(--shadow-sm);
+    pointer-events: none;
+}
+
+.partner-card-ribbon i {
+    margin-right: 6px;
+}
+
+.partner-card-header {
+    padding: 18px 18px 10px 18px;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.partner-card-title {
+    font-weight: 800;
+    font-size: 1.05em;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.partner-card-subtitle {
+    color: var(--gray);
+    font-size: 0.92em;
+}
+
+.partner-card-title-icon {
+    color: #FFC107;
+    font-size: 1.1em;
+}
+
+.partner-badge {
+    background: rgba(33, 150, 243, 0.14);
+    color: #0B5ED7;
+    border: 1px solid rgba(33, 150, 243, 0.22);
+    height: fit-content;
+}
+
+.partner-badge-highlight {
+    background: rgba(255, 193, 7, 0.18);
+    color: #8A5A00;
+    border: 1px solid rgba(255, 193, 7, 0.35);
+}
+
+.partner-card-body {
+    padding: 0 18px 16px 18px;
+    flex: 1;
+}
+
+.partner-contact {
+    display: grid;
+    gap: 8px;
+}
+
+.partner-contact-item {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    color: var(--gray);
+}
+
+.partner-contact-item i {
+    color: var(--primary);
+}
+
+.partner-card-footer {
+    padding: 14px 18px 18px 18px;
+}
+
+.partners-cta {
+    background: linear-gradient(135deg, #7F7FD5 0%, #86A8E7 50%, #91EAE4 100%);
+    color: white;
+}
+
+.partners-cta-home {
+    background: linear-gradient(135deg, #00BCD4 0%, #2196F3 100%);
+    color: white;
+}
+
+.partners-cta-home .btn {
+    border-radius: var(--radius-lg);
+    font-weight: 700;
+}
+
+/* ═══════════════════════════════════════════════ */
 /* BOTÕES */
 /* ═══════════════════════════════════════════════ */
 .btn {
@@ -429,7 +679,7 @@ body {
     padding: 10px 25px;
     font-weight: 600;
     transition: all var(--transition-fast);
-    border: none;
+    border: 1px solid transparent;
 }
 
 .btn-primary {

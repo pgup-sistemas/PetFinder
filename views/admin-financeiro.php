@@ -8,12 +8,29 @@ $pageTitle = 'Admin - Financeiro - PetFinder';
 $doacaoController = new DoacaoController();
 $doacaoModel = new Doacao();
 
+$parceiroPagamentoModel = new ParceiroPagamento();
+$parceiroAssinaturaModel = new ParceiroAssinatura();
+
 $metaAtual = $doacaoController->metaAtual();
+
+$tab = isset($_GET['tab']) ? trim((string)$_GET['tab']) : 'doacoes';
+$tab = in_array($tab, ['doacoes', 'parceiros'], true) ? $tab : 'doacoes';
 
 $status = isset($_GET['status']) ? trim((string)$_GET['status']) : '';
 $allowedStatus = ['', 'pendente', 'aprovada', 'cancelada', 'estornada'];
 if (!in_array($status, $allowedStatus, true)) {
     $status = '';
+}
+
+$partnerStatus = isset($_GET['partner_status']) ? trim((string)$_GET['partner_status']) : '';
+$allowedPartnerStatus = ['', 'pendente', 'aprovado', 'recusado'];
+if (!in_array($partnerStatus, $allowedPartnerStatus, true)) {
+    $partnerStatus = '';
+}
+
+$partnerMes = isset($_GET['partner_mes']) ? trim((string)$_GET['partner_mes']) : '';
+if ($partnerMes !== '' && !preg_match('/^\d{4}-\d{2}$/', $partnerMes)) {
+    $partnerMes = '';
 }
 
 $pagina = isset($_GET['pagina']) ? (int)$_GET['pagina'] : 1;
@@ -78,6 +95,17 @@ $total = $doacaoModel->countAll($status !== '' ? $status : null);
 $doacoes = $doacaoModel->findAll($limite, $offset, $status !== '' ? $status : null);
 $totalPaginas = (int)ceil($total / $limite);
 
+$partnerTotal = $parceiroPagamentoModel->countAll($partnerStatus !== '' ? $partnerStatus : null, $partnerMes !== '' ? $partnerMes : null);
+$partnerPagamentos = $parceiroPagamentoModel->findAll($limite, $offset, $partnerStatus !== '' ? $partnerStatus : null, $partnerMes !== '' ? $partnerMes : null);
+$partnerTotalPaginas = (int)ceil($partnerTotal / $limite);
+
+$doacaoResumo = $doacaoModel->getDashboardSummary();
+$parceiroResumo = $parceiroPagamentoModel->getDashboardSummary();
+$assinaturaResumo = $parceiroAssinaturaModel->getDashboardSummary(7);
+$assinaturasExpirando = $parceiroAssinaturaModel->listExpiringSoon(7, 10);
+
+$totalGeralMesAtual = (float)($doacaoResumo['mes_atual'] ?? 0) + (float)($parceiroResumo['mes_atual'] ?? 0);
+
 include __DIR__ . '/../includes/header.php';
 ?>
 
@@ -85,11 +113,138 @@ include __DIR__ . '/../includes/header.php';
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
         <div>
             <h1 class="h4 fw-bold mb-1">Admin · Financeiro</h1>
-            <p class="text-muted mb-0">Meta mensal e doações.</p>
+            <p class="text-muted mb-0">Meta mensal, doações e pagamentos de parceiros.</p>
         </div>
         <div class="d-flex gap-2">
             <a href="<?php echo BASE_URL; ?>/admin" class="btn btn-outline-secondary">Voltar</a>
             <a href="<?php echo BASE_URL; ?>/admin/usuarios" class="btn btn-outline-primary">Usuários</a>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="fw-bold mb-2">Doações</div>
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="text-muted small">Total aprovado</div>
+                            <div class="h5 mb-0"><?php echo formatMoney((float)($doacaoResumo['total_aprovado'] ?? 0)); ?></div>
+                        </div>
+                        <div class="text-end">
+                            <div class="text-muted small">Mês atual</div>
+                            <div class="h5 mb-0"><?php echo formatMoney((float)($doacaoResumo['mes_atual'] ?? 0)); ?></div>
+                        </div>
+                    </div>
+                    <div class="mt-3 d-flex gap-2 flex-wrap">
+                        <span class="badge bg-light text-dark">Total: <?php echo (int)($doacaoResumo['total_doacoes'] ?? 0); ?></span>
+                        <span class="badge bg-light text-dark">Recorrente: <?php echo formatMoney((float)($doacaoResumo['recorrente'] ?? 0)); ?></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="fw-bold mb-2">Parceiros</div>
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="text-muted small">Total aprovado</div>
+                            <div class="h5 mb-0"><?php echo formatMoney((float)($parceiroResumo['total_aprovado'] ?? 0)); ?></div>
+                        </div>
+                        <div class="text-end">
+                            <div class="text-muted small">Mês atual</div>
+                            <div class="h5 mb-0"><?php echo formatMoney((float)($parceiroResumo['mes_atual'] ?? 0)); ?></div>
+                        </div>
+                    </div>
+                    <div class="mt-3 d-flex gap-2 flex-wrap">
+                        <span class="badge bg-light text-dark">Pagamentos: <?php echo (int)($parceiroResumo['total_pagamentos'] ?? 0); ?></span>
+                        <a class="badge bg-light text-dark text-decoration-none" href="<?php echo BASE_URL; ?>/admin/financeiro?tab=parceiros&partner_status=pendente">Pendentes: <?php echo (int)($parceiroResumo['pendentes'] ?? 0); ?></a>
+                        <a class="badge bg-light text-dark text-decoration-none" href="<?php echo BASE_URL; ?>/admin/financeiro?tab=parceiros&partner_status=aprovado">Aprovados: <?php echo (int)($parceiroResumo['aprovados'] ?? 0); ?></a>
+                        <a class="badge bg-light text-dark text-decoration-none" href="<?php echo BASE_URL; ?>/admin/financeiro?tab=parceiros&partner_status=recusado">Recusados: <?php echo (int)($parceiroResumo['recusados'] ?? 0); ?></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="fw-bold mb-2">Total geral (mês atual)</div>
+                    <div class="d-flex justify-content-between align-items-end">
+                        <div>
+                            <div class="text-muted small">Doações + Parceiros</div>
+                            <div class="h4 mb-0"><?php echo formatMoney((float)$totalGeralMesAtual); ?></div>
+                        </div>
+                        <div class="text-end">
+                            <a class="btn btn-sm btn-outline-primary" href="<?php echo BASE_URL; ?>/admin/financeiro?tab=parceiros">Ver parceiros</a>
+                        </div>
+                    </div>
+                    <div class="mt-3 d-flex gap-2 flex-wrap">
+                        <span class="badge bg-light text-dark">Doações (mês): <?php echo formatMoney((float)($doacaoResumo['mes_atual'] ?? 0)); ?></span>
+                        <span class="badge bg-light text-dark">Parceiros (mês): <?php echo formatMoney((float)($parceiroResumo['mes_atual'] ?? 0)); ?></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="fw-bold mb-2">Assinaturas de parceiros</div>
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="text-muted small">Ativas</div>
+                            <div class="h5 mb-0"><?php echo (int)($assinaturaResumo['ativas'] ?? 0); ?></div>
+                        </div>
+                        <div class="text-end">
+                            <div class="text-muted small">Expirando (7 dias)</div>
+                            <div class="h5 mb-0"><?php echo (int)($assinaturaResumo['expirando'] ?? 0); ?></div>
+                        </div>
+                    </div>
+                    <div class="mt-3 d-flex gap-2 flex-wrap">
+                        <span class="badge bg-light text-dark">Pendentes: <?php echo (int)($assinaturaResumo['pendentes'] ?? 0); ?></span>
+                        <span class="badge bg-light text-dark">Suspensas: <?php echo (int)($assinaturaResumo['suspensas'] ?? 0); ?></span>
+                        <span class="badge bg-light text-dark">Canceladas: <?php echo (int)($assinaturaResumo['canceladas'] ?? 0); ?></span>
+                    </div>
+
+                    <div class="mt-3">
+                        <div class="text-muted small mb-2">Expirando em breve</div>
+                        <?php if (empty($assinaturasExpirando)): ?>
+                            <div class="text-muted small">Nenhuma assinatura expirando.</div>
+                        <?php else: ?>
+                            <div class="table-responsive">
+                                <table class="table table-sm align-middle mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Parceiro</th>
+                                            <th class="text-end">Pago até</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($assinaturasExpirando as $a): ?>
+                                            <tr>
+                                                <td>
+                                                    <div class="fw-semibold"><?php echo sanitize((string)($a['usuario_nome'] ?? '')); ?></div>
+                                                    <div class="text-muted small"><?php echo sanitize((string)($a['email'] ?? '')); ?></div>
+                                                </td>
+                                                <td class="text-end text-muted small"><?php echo !empty($a['pago_ate']) ? date('d/m/Y', strtotime($a['pago_ate'])) : '-'; ?></td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="mt-3">
+                        <a class="btn btn-sm btn-outline-secondary" href="<?php echo BASE_URL; ?>/admin/parceiros">Gerenciar parceiros</a>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -135,25 +290,53 @@ include __DIR__ . '/../includes/header.php';
         </div>
     </div>
 
+    <ul class="nav nav-tabs mb-3">
+        <li class="nav-item">
+            <a class="nav-link <?php echo $tab === 'doacoes' ? 'active' : ''; ?>" href="<?php echo BASE_URL; ?>/admin/financeiro?tab=doacoes">Doações</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link <?php echo $tab === 'parceiros' ? 'active' : ''; ?>" href="<?php echo BASE_URL; ?>/admin/financeiro?tab=parceiros">Parceiros</a>
+        </li>
+    </ul>
+
     <div class="card shadow-sm border-0">
         <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-                <h2 class="h6 fw-bold mb-0">Doações</h2>
-                <form method="GET" action="" class="d-flex gap-2">
-                    <select name="status" class="form-select">
-                        <?php foreach ($allowedStatus as $s): ?>
-                            <option value="<?php echo sanitize($s); ?>" <?php echo $s === $status ? 'selected' : ''; ?>>
-                                <?php echo $s === '' ? 'Todos' : ucfirst($s); ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                    <button class="btn btn-outline-primary" type="submit">Filtrar</button>
-                </form>
-            </div>
+            <?php if ($tab === 'doacoes'): ?>
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                    <h2 class="h6 fw-bold mb-0">Doações</h2>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <?php
+                            $exportDoacoesBase = [
+                                'tab' => 'doacoes',
+                            ];
+                            if ($status !== '') {
+                                $exportDoacoesBase['status'] = $status;
+                            }
+                            $exportDoacoesCsv = $exportDoacoesBase;
+                            $exportDoacoesCsv['format'] = 'csv';
+                            $exportDoacoesPdf = $exportDoacoesBase;
+                            $exportDoacoesPdf['format'] = 'pdf';
+                        ?>
+                        <a class="btn btn-outline-secondary" href="<?php echo BASE_URL . '/admin/financeiro/export?' . http_build_query($exportDoacoesCsv); ?>">Exportar CSV</a>
+                        <a class="btn btn-outline-secondary" href="<?php echo BASE_URL . '/admin/financeiro/export?' . http_build_query($exportDoacoesPdf); ?>">Exportar PDF</a>
 
-            <?php if (empty($doacoes)): ?>
-                <p class="text-muted mb-0">Nenhuma doação encontrada.</p>
-            <?php else: ?>
+                        <form method="GET" action="" class="d-flex gap-2">
+                        <input type="hidden" name="tab" value="doacoes">
+                        <select name="status" class="form-select">
+                            <?php foreach ($allowedStatus as $s): ?>
+                                <option value="<?php echo sanitize($s); ?>" <?php echo $s === $status ? 'selected' : ''; ?>>
+                                    <?php echo $s === '' ? 'Todos' : ucfirst($s); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <button class="btn btn-outline-primary" type="submit">Filtrar</button>
+                        </form>
+                    </div>
+                </div>
+
+                <?php if (empty($doacoes)): ?>
+                    <p class="text-muted mb-0">Nenhuma doação encontrada.</p>
+                <?php else: ?>
                 <div class="table-responsive">
                     <table class="table align-middle">
                         <thead>
@@ -199,19 +382,138 @@ include __DIR__ . '/../includes/header.php';
                     <?php
                         $prev = max(1, $pagina - 1);
                         $next = min($totalPaginas, $pagina + 1);
-                        $qs = $status !== '' ? '&status=' . urlencode($status) : '';
+                        $qs = 'tab=doacoes';
+                        if ($status !== '') {
+                            $qs .= '&status=' . urlencode($status);
+                        }
                     ?>
                     <nav class="mt-3" aria-label="Paginação">
                         <ul class="pagination justify-content-center mb-0">
                             <li class="page-item <?php echo $pagina <= 1 ? 'disabled' : ''; ?>">
-                                <a class="page-link" href="<?php echo BASE_URL . '/admin/financeiro?pagina=' . $prev . $qs; ?>">Anterior</a>
+                                <a class="page-link" href="<?php echo BASE_URL . '/admin/financeiro?pagina=' . $prev . '&' . $qs; ?>">Anterior</a>
                             </li>
                             <li class="page-item disabled"><span class="page-link"><?php echo $pagina; ?> / <?php echo $totalPaginas; ?></span></li>
                             <li class="page-item <?php echo $pagina >= $totalPaginas ? 'disabled' : ''; ?>">
-                                <a class="page-link" href="<?php echo BASE_URL . '/admin/financeiro?pagina=' . $next . $qs; ?>">Próxima</a>
+                                <a class="page-link" href="<?php echo BASE_URL . '/admin/financeiro?pagina=' . $next . '&' . $qs; ?>">Próxima</a>
                             </li>
                         </ul>
                     </nav>
+                <?php endif; ?>
+                <?php endif; ?>
+
+            <?php else: ?>
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                    <h2 class="h6 fw-bold mb-0">Pagamentos de Parceiros</h2>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <?php
+                            $exportParceirosBase = [
+                                'tab' => 'parceiros',
+                            ];
+                            if ($partnerMes !== '') {
+                                $exportParceirosBase['partner_mes'] = $partnerMes;
+                            }
+                            if ($partnerStatus !== '') {
+                                $exportParceirosBase['partner_status'] = $partnerStatus;
+                            }
+                            $exportParceirosCsv = $exportParceirosBase;
+                            $exportParceirosCsv['format'] = 'csv';
+                            $exportParceirosPdf = $exportParceirosBase;
+                            $exportParceirosPdf['format'] = 'pdf';
+                        ?>
+                        <a class="btn btn-outline-secondary" href="<?php echo BASE_URL . '/admin/financeiro/export?' . http_build_query($exportParceirosCsv); ?>">Exportar CSV</a>
+                        <a class="btn btn-outline-secondary" href="<?php echo BASE_URL . '/admin/financeiro/export?' . http_build_query($exportParceirosPdf); ?>">Exportar PDF</a>
+
+                        <form method="GET" action="" class="d-flex gap-2 flex-wrap">
+                        <input type="hidden" name="tab" value="parceiros">
+                        <input type="month" name="partner_mes" class="form-control" value="<?php echo sanitize($partnerMes); ?>">
+                        <select name="partner_status" class="form-select">
+                            <?php foreach ($allowedPartnerStatus as $s): ?>
+                                <option value="<?php echo sanitize($s); ?>" <?php echo $s === $partnerStatus ? 'selected' : ''; ?>>
+                                    <?php echo $s === '' ? 'Todos' : ucfirst($s); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <button class="btn btn-outline-primary" type="submit">Filtrar</button>
+                        </form>
+                    </div>
+                </div>
+
+                <?php if (empty($partnerPagamentos)): ?>
+                    <p class="text-muted mb-0">Nenhum pagamento de parceiro encontrado.</p>
+                <?php else: ?>
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Data</th>
+                                    <th>Usuário</th>
+                                    <th>Plano</th>
+                                    <th>Método</th>
+                                    <th>Periodicidade</th>
+                                    <th>Valor</th>
+                                    <th>Referência</th>
+                                    <th>Efí Charge</th>
+                                    <th>Efí Subscription</th>
+                                    <th>Status</th>
+                                    <th class="text-end">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($partnerPagamentos as $p): ?>
+                                    <tr>
+                                        <td><?php echo (int)$p['id']; ?></td>
+                                        <td class="text-muted small"><?php echo !empty($p['data_criacao']) ? date('d/m/Y H:i', strtotime($p['data_criacao'])) : '-'; ?></td>
+                                        <td>
+                                            <div class="fw-semibold"><?php echo sanitize($p['usuario_nome'] ?? ''); ?></div>
+                                            <div class="text-muted small"><?php echo sanitize($p['email'] ?? ''); ?></div>
+                                        </td>
+                                        <td><span class="badge bg-light text-dark"><?php echo sanitize((string)($p['plano'] ?? '')); ?></span></td>
+                                        <td class="text-muted small"><?php echo sanitize((string)($p['gateway_tipo'] ?? $p['metodo'] ?? '')); ?></td>
+                                        <td class="text-muted small"><?php echo sanitize((string)($p['periodicidade'] ?? '')); ?></td>
+                                        <td><?php echo formatMoney((float)($p['valor'] ?? 0)); ?></td>
+                                        <td class="text-muted small"><?php echo sanitize((string)($p['referencia'] ?? $p['efi_charge_id'] ?? '')); ?></td>
+                                        <td class="text-muted small"><?php echo sanitize((string)($p['efi_charge_id'] ?? '')); ?></td>
+                                        <td class="text-muted small"><?php echo sanitize((string)($p['efi_subscription_id'] ?? '')); ?></td>
+                                        <td><span class="badge bg-light text-dark"><?php echo sanitize((string)($p['status'] ?? '')); ?></span></td>
+                                        <td class="text-end">
+                                            <?php if (!empty($p['payment_url'])): ?>
+                                                <a class="btn btn-sm btn-outline-primary" href="<?php echo sanitize((string)$p['payment_url']); ?>" target="_blank" rel="noopener noreferrer">Abrir checkout</a>
+                                            <?php else: ?>
+                                                <span class="text-muted small">-</span>
+                                            <?php endif; ?>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <?php if ($partnerTotalPaginas > 1): ?>
+                        <?php
+                            $prev = max(1, $pagina - 1);
+                            $next = min($partnerTotalPaginas, $pagina + 1);
+
+                            $qs = 'tab=parceiros';
+                            if ($partnerStatus !== '') {
+                                $qs .= '&partner_status=' . urlencode($partnerStatus);
+                            }
+                            if ($partnerMes !== '') {
+                                $qs .= '&partner_mes=' . urlencode($partnerMes);
+                            }
+                        ?>
+                        <nav class="mt-3" aria-label="Paginação">
+                            <ul class="pagination justify-content-center mb-0">
+                                <li class="page-item <?php echo $pagina <= 1 ? 'disabled' : ''; ?>">
+                                    <a class="page-link" href="<?php echo BASE_URL . '/admin/financeiro?pagina=' . $prev . '&' . $qs; ?>">Anterior</a>
+                                </li>
+                                <li class="page-item disabled"><span class="page-link"><?php echo $pagina; ?> / <?php echo $partnerTotalPaginas; ?></span></li>
+                                <li class="page-item <?php echo $pagina >= $partnerTotalPaginas ? 'disabled' : ''; ?>">
+                                    <a class="page-link" href="<?php echo BASE_URL . '/admin/financeiro?pagina=' . $next . '&' . $qs; ?>">Próxima</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    <?php endif; ?>
                 <?php endif; ?>
             <?php endif; ?>
         </div>

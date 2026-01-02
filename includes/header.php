@@ -59,6 +59,9 @@ $pageTitle = $pageTitle ?? 'PetFinder';
                         <a class="nav-link" href="<?php echo BASE_URL; ?>/doar">Doar</a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="<?php echo BASE_URL; ?>/parceiros">Parceiros</a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="<?php echo BASE_URL; ?>/ajuda">Ajuda</a>
                     </li>
                     <?php if (isLoggedIn()): ?>
@@ -78,8 +81,15 @@ $pageTitle = $pageTitle ?? 'PetFinder';
                             <ul class="dropdown-menu dropdown-menu-end">
                                 <?php if (isAdmin()): ?>
                                     <li><a class="dropdown-item" href="<?php echo BASE_URL; ?>/admin">Painel Admin</a></li>
+                                    <li><a class="dropdown-item" href="<?php echo BASE_URL; ?>/admin/parceiros">Admin Parceiros</a></li>
+                                    <li><a class="dropdown-item" href="<?php echo BASE_URL; ?>/admin/usuarios">Admin Usuários</a></li>
+                                    <li><a class="dropdown-item" href="<?php echo BASE_URL; ?>/admin/financeiro">Admin Financeiro</a></li>
                                     <li><hr class="dropdown-divider"></li>
                                 <?php endif; ?>
+                                <li><a class="dropdown-item" href="<?php echo BASE_URL; ?>/parceiros">Ver Parceiros</a></li>
+                                <li><a class="dropdown-item" href="<?php echo BASE_URL; ?>/parceiro/painel">Painel do Parceiro</a></li>
+                                <li><a class="dropdown-item" href="<?php echo BASE_URL; ?>/parceiros/inscricao">Inscrição de Parceiro</a></li>
+                                <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="<?php echo BASE_URL; ?>/perfil">Meu Perfil</a></li>
                                 <li><a class="dropdown-item" href="<?php echo BASE_URL; ?>/alertas">Meus Alertas</a></li>
                                 <li><a class="dropdown-item" href="<?php echo BASE_URL; ?>/meus-anuncios">Meus Anúncios</a></li>

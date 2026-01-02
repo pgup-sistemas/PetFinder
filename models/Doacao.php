@@ -21,6 +21,11 @@ class Doacao
         return $this->db->insert('doacoes', $data);
     }
 
+    public function update(int $id, array $data)
+    {
+        return $this->db->update('doacoes', $data, 'id = ?', [$id]);
+    }
+
     public function findById(int $id)
     {
         return $this->db->fetchOne('SELECT * FROM doacoes WHERE id = ? LIMIT 1', [$id]);
@@ -29,6 +34,35 @@ class Doacao
     public function findByTransactionId(string $transactionId)
     {
         return $this->db->fetchOne('SELECT * FROM doacoes WHERE transaction_id = ? LIMIT 1', [$transactionId]);
+    }
+
+    public function findByEfiChargeId($chargeId)
+    {
+        $chargeId = (string)$chargeId;
+        $chargeId = preg_replace('/[^0-9]/', '', $chargeId);
+        if ($chargeId === '') {
+            return null;
+        }
+
+        return $this->db->fetchOne('SELECT * FROM doacoes WHERE efi_charge_id = ? LIMIT 1', [$chargeId]);
+    }
+
+    public function findLastBySubscriptionId($subscriptionId)
+    {
+        $subscriptionId = (string)$subscriptionId;
+        $subscriptionId = preg_replace('/[^0-9]/', '', $subscriptionId);
+        if ($subscriptionId === '') {
+            return null;
+        }
+
+        return $this->db->fetchOne(
+            'SELECT *
+             FROM doacoes
+             WHERE efi_subscription_id = ?
+             ORDER BY data_doacao DESC
+             LIMIT 1',
+            [$subscriptionId]
+        );
     }
 
     /**

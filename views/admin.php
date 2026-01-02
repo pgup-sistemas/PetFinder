@@ -22,6 +22,7 @@ include __DIR__ . '/../includes/header.php';
         </div>
         <div class="d-flex gap-2">
             <a href="<?php echo BASE_URL; ?>/admin/usuarios" class="btn btn-outline-primary">Usuários</a>
+            <a href="<?php echo BASE_URL; ?>/admin/parceiros" class="btn btn-outline-primary">Parceiros</a>
             <a href="<?php echo BASE_URL; ?>/admin/financeiro" class="btn btn-primary">Financeiro</a>
         </div>
     </div>

@@ -208,11 +208,16 @@ function displayFlashMessage() {
  * Redireciona para URL
  */
 function redirect($url) {
+    $target = (string)$url;
+    if (!preg_match('#^https?://#i', $target)) {
+        $target = BASE_URL . $target;
+    }
+
     if (!headers_sent()) {
-        header('Location: ' . BASE_URL . $url);
+        header('Location: ' . $target);
         exit;
     } else {
-        echo "<script>window.location.href='" . BASE_URL . $url . "';</script>";
+        echo "<script>window.location.href='" . $target . "';</script>";
         exit;
     }
 }

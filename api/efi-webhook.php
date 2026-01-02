@@ -46,21 +46,34 @@ if ($txid === '') {
 $doacaoModel = new Doacao();
 $doacao = $doacaoModel->findByTransactionId($txid);
 
-if (empty($doacao)) {
-    http_response_code(404);
-    echo json_encode(['ok' => false, 'error' => 'donation_not_found']);
-    exit;
-}
-
-if (($doacao['status'] ?? '') === 'aprovada') {
-    echo json_encode(['ok' => true, 'status' => 'already_approved']);
-    exit;
-}
-
 try {
     $pagamentoController = new PagamentoController();
-    $atualizada = $pagamentoController->sincronizarStatusDoacaoPix((int)$doacao['id'], $txid);
-    echo json_encode(['ok' => true, 'status' => $atualizada['status'] ?? 'pendente']);
+    if (!empty($doacao)) {
+        if (($doacao['status'] ?? '') === 'aprovada') {
+            echo json_encode(['ok' => true, 'status' => 'already_approved']);
+            exit;
+        }
+
+        $atualizada = $pagamentoController->sincronizarStatusDoacaoPix((int)$doacao['id'], $txid);
+        echo json_encode(['ok' => true, 'tipo' => 'doacao', 'status' => $atualizada['status'] ?? 'pendente']);
+        exit;
+    }
+
+    $parceiroPagamentoModel = new ParceiroPagamento();
+    $pagamentoParceiro = $parceiroPagamentoModel->findByReferencia($txid);
+    if (empty($pagamentoParceiro)) {
+        http_response_code(404);
+        echo json_encode(['ok' => false, 'error' => 'transaction_not_found']);
+        exit;
+    }
+
+    if (($pagamentoParceiro['status'] ?? '') === 'aprovado') {
+        echo json_encode(['ok' => true, 'tipo' => 'parceiro', 'status' => 'already_approved']);
+        exit;
+    }
+
+    $atualizada = $pagamentoController->sincronizarStatusParceiroPix((int)$pagamentoParceiro['id'], $txid);
+    echo json_encode(['ok' => true, 'tipo' => 'parceiro', 'status' => $atualizada['status'] ?? 'pendente']);
     exit;
 } catch (Exception $e) {
     error_log('[efi-webhook] Falha ao sincronizar cobrança Pix: ' . $e->getMessage());

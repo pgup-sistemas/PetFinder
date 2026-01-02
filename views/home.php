@@ -241,6 +241,25 @@ include __DIR__ . '/../includes/header.php';
     </div>
 </div>
 
+<!-- Parceiros CTA (discreto) -->
+<div class="partners-cta-home py-4">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h3 class="fw-bold mb-2">🐾 Serviços Pet na sua região</h3>
+                <p class="mb-0">
+                    Conheça empresas parceiras (pet shops, clínicas, hotéis, adestradores) e ajude a manter o PetFinder sustentável.
+                </p>
+            </div>
+            <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                <a href="<?php echo BASE_URL; ?>/parceiros" class="btn btn-light btn-lg">
+                    Ver Parceiros
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Doações CTA -->
 <div class="donation-cta py-5">
     <div class="container">

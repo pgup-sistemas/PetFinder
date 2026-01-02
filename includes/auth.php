@@ -270,7 +270,7 @@ class Auth {
         }
         
         $user = $this->db->fetchOne(
-            "SELECT id FROM usuarios 
+            "SELECT id, email, nome, email_confirmado, token_confirmacao FROM usuarios 
              WHERE token_recuperacao = ? 
              AND token_expira > NOW()",
             [$token]
@@ -290,7 +290,28 @@ class Auth {
             [$user['id']]
         );
         
-        return ['success' => true, 'message' => 'Senha alterada com sucesso!'];
+        $confirmationSent = false;
+        if (empty($user['email_confirmado'])) {
+            $confirmationToken = $user['token_confirmacao'] ?? '';
+            if (empty($confirmationToken)) {
+                $confirmationToken = bin2hex(random_bytes(32));
+                $this->db->update('usuarios',
+                    ['token_confirmacao' => $confirmationToken],
+                    'id = ?',
+                    [$user['id']]
+                );
+            }
+            
+            $this->sendConfirmationEmail($user['email'], $user['nome'], $confirmationToken);
+            $confirmationSent = true;
+        }
+        
+        return [
+            'success' => true,
+            'message' => 'Senha alterada com sucesso!',
+            'need_confirmation' => $confirmationSent,
+            'confirmation_sent' => $confirmationSent
+        ];
     }
     
     /**

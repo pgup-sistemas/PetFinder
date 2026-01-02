@@ -63,18 +63,71 @@
 - [ ] Monitoramento e health checks
 - [ ] Deploy automatizado (CI/CD)
 
-## 🐛 Bugs Conhecidos
+## Bugs Conhecidos
 
 - [ ] Validação de upload em multi-step pode avisar sobre arquivos temporários ausentes (já mitigado)
 - [ ] Em dispositivos móveis, alguns botões podem precisar de ajuste de toque
 
-## 💡 Sugestões de Melhoria
+## Sugestões de Melhoria
 
 - Adicionar micro-interações e animações sutis
 - Implementar dark mode
 - Otimizar imagens com WebP
 - Adicionar testes automatizados (PHPUnit)
 - Melhorar SEO com metatags dinâmicas
+
+## Roadmap de Deploy (Produção) - cPanel/HostGator
+
+**Destino:** `public_html/petfinder` (SSL ativo)
+
+### 1) Preparação (antes de subir)
+
+- [ ] Definir `APP_ENV=production`
+- [ ] Definir `BASE_URL=https://SEU-DOMINIO/petfinder`
+- [ ] Configurar credenciais de banco (`DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASS`)
+- [ ] Configurar SMTP (`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `EMAIL_FROM`)
+- [ ] Configurar Efí (`EFI_CLIENT_ID`, `EFI_CLIENT_SECRET`, `EFI_CERTIFICATE_PATH`, `EFI_CERTIFICATE_PASSWORD`, `EFI_PIX_KEY`, `EFI_WEBHOOK_TOKEN`)
+- [ ] Garantir que **não** será usado admin padrão em produção (senha padrão / inserção automática)
+- [ ] Remover/limitar logs verbosos com dados pessoais (ex.: `print_r($data)` em produção)
+
+### 2) Apache / `.htaccess`
+
+- [ ] Confirmar `RewriteBase /petfinder/`
+- [ ] Ativar redirecionamento para HTTPS (produção)
+- [ ] Proteger `uploads/` contra execução e listagem de diretório
+
+### 3) Deploy do código
+
+- [ ] Subir o projeto para `public_html/petfinder`
+- [ ] Garantir que `vendor/` exista no servidor
+  - [ ] Opção A: rodar `composer install --no-dev` no servidor
+  - [ ] Opção B: enviar `vendor/` junto no upload
+- [ ] Ajustar permissões
+  - [ ] Pastas: `755`
+  - [ ] Arquivos: `644`
+  - [ ] `uploads/` gravável pelo PHP
+
+### 4) Banco de dados
+
+- [ ] Criar banco e usuário no cPanel
+- [ ] Importar `database/schema.sql` (evitar dados padrão de admin em produção)
+- [ ] Validar conexão (página inicial + login)
+
+### 5) Cron (tarefas)
+
+- [ ] Configurar Cron Job para `scripts/process_alerts.php`
+- [ ] Validar execução e logs
+
+### 6) Checklist pós-deploy (validação)
+
+- [ ] Cadastro + confirmação de email
+- [ ] Login/logout + bloqueio por tentativas
+- [ ] Recuperação de senha
+- [ ] Criar/editar/excluir anúncio (upload de fotos)
+- [ ] Favoritos/alertas
+- [ ] Área admin (acesso restrito)
+- [ ] Doações (Pix/cartão) e webhooks Efí
+- [ ] Verificar logs de erro no cPanel após navegação
 
 ---
 

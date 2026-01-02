@@ -10,6 +10,7 @@ if (isLoggedIn()) {
 $token = $_GET['token'] ?? '';
 $errors = [];
 $successMessage = '';
+ $infoMessage = '';
 
 if (empty($token)) {
     $errors[] = 'Token inválido.';
@@ -31,7 +32,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $result = $usuarioController->resetarSenha($tokenPost, $senha, $confirma);
 
             if (!empty($result['success'])) {
-                $successMessage = 'Senha redefinida com sucesso! Você já pode fazer login.';
+                $successMessage = 'Senha redefinida com sucesso!';
+                if (!empty($result['confirmation_sent'])) {
+                    $infoMessage = 'Como seu e-mail ainda não foi confirmado, enviamos automaticamente um novo link de confirmação. Verifique sua caixa de entrada (e spam).';
+                } else {
+                    $successMessage .= ' Você já pode fazer login.';
+                }
             } elseif (!empty($result['error'])) {
                 $errors[] = $result['error'];
             }
@@ -67,6 +73,11 @@ include __DIR__ . '/../includes/header.php';
                         <div class="alert alert-success">
                             <?php echo sanitize($successMessage); ?>
                         </div>
+                        <?php if (!empty($infoMessage)): ?>
+                            <div class="alert alert-info">
+                                <?php echo sanitize($infoMessage); ?>
+                            </div>
+                        <?php endif; ?>
                         <div class="d-grid">
                             <a class="btn btn-primary btn-lg" href="<?php echo BASE_URL; ?>/login.php">Ir para Login</a>
                         </div>

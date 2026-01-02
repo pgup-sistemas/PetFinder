@@ -88,7 +88,7 @@ include __DIR__ . '/../includes/header.php';
                         <div class="mb-4">
                             <label class="form-label fw-bold">Método de pagamento</label>
                             <div class="row g-2">
-                                <?php $metodos = ['PIX' => 'pix']; ?>
+                                <?php $metodos = ['PIX' => 'pix', 'Cartão (à vista)' => 'cartao_avista', 'Cartão (mensal)' => 'cartao_recorrente']; ?>
                                 <?php foreach ($metodos as $label => $valor): ?>
                                     <div class="col-6 col-md-3">
                                         <input type="radio" class="btn-check" name="metodo_pagamento" id="metodo_<?php echo $valor; ?>" value="<?php echo $valor; ?>">
@@ -96,6 +96,7 @@ include __DIR__ . '/../includes/header.php';
                                     </div>
                                 <?php endforeach; ?>
                             </div>
+                            <div class="form-text">Pix e cartão à vista são doações únicas. Para doação mensal, use Cartão (mensal).</div>
                         </div>
 
                         <div class="form-check form-switch mb-4">
@@ -217,5 +218,46 @@ include __DIR__ . '/../includes/header.php';
     border-radius: 16px;
 }
 </style>
+
+<script>
+(() => {
+    const recorrente = document.getElementById('recorrente');
+    const metodoInputs = document.querySelectorAll('input[name="metodo_pagamento"]');
+
+    function getMetodoSelecionado() {
+        const el = document.querySelector('input[name="metodo_pagamento"]:checked');
+        return el ? el.value : '';
+    }
+
+    function selectMetodo(value) {
+        const el = document.getElementById('metodo_' + value);
+        if (el) {
+            el.checked = true;
+        }
+    }
+
+    function syncRecorrencia() {
+        const metodo = getMetodoSelecionado();
+        if (metodo === 'cartao_recorrente') {
+            recorrente.checked = true;
+            recorrente.disabled = true;
+            return;
+        }
+
+        recorrente.disabled = false;
+        if (recorrente.checked) {
+            selectMetodo('cartao_recorrente');
+            recorrente.disabled = true;
+        }
+    }
+
+    metodoInputs.forEach((el) => {
+        el.addEventListener('change', syncRecorrencia);
+    });
+    recorrente.addEventListener('change', syncRecorrencia);
+
+    syncRecorrencia();
+})();
+</script>
 
 <?php include __DIR__ . '/../includes/footer.php'; ?>

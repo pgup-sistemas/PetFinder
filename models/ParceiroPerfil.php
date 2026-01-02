@@ -1,0 +1,100 @@
+<?php
+
+class ParceiroPerfil
+{
+    private $db;
+
+    public function __construct($db = null)
+    {
+        $this->db = $db ?: getDB();
+    }
+
+    public function findByUserId(int $usuarioId)
+    {
+        return $this->db->fetchOne('SELECT * FROM parceiro_perfis WHERE usuario_id = ? LIMIT 1', [$usuarioId]);
+    }
+
+    public function findBySlug(string $slug)
+    {
+        return $this->db->fetchOne(
+            'SELECT pp.*, u.email as usuario_email
+             FROM parceiro_perfis pp
+             JOIN usuarios u ON u.id = pp.usuario_id
+             WHERE pp.slug = ? AND pp.publicado = 1
+             LIMIT 1',
+            [$slug]
+        );
+    }
+
+    public function listPublic(?string $cidade = null, ?string $categoria = null): array
+    {
+        $where = ['pp.publicado = 1'];
+        $params = [];
+
+        if ($cidade !== null && trim($cidade) !== '') {
+            $where[] = 'pp.cidade = ?';
+            $params[] = trim($cidade);
+        }
+
+        if ($categoria !== null && trim($categoria) !== '') {
+            $where[] = 'pp.categoria = ?';
+            $params[] = trim($categoria);
+        }
+
+        $sql =
+            'SELECT pp.*
+             FROM parceiro_perfis pp
+             WHERE ' . implode(' AND ', $where) .
+            ' ORDER BY pp.destaque DESC, pp.verificado DESC, pp.nome_fantasia ASC';
+
+        return $this->db->fetchAll($sql, $params);
+    }
+
+    public function create(array $data): int
+    {
+        return $this->db->insert('parceiro_perfis', $data);
+    }
+
+    public function update(int $id, array $data)
+    {
+        return $this->db->update('parceiro_perfis', $data, 'id = ?', [$id]);
+    }
+
+    public function publishForUser(int $usuarioId, bool $publish): void
+    {
+        $this->db->update('parceiro_perfis', ['publicado' => $publish ? 1 : 0], 'usuario_id = ?', [$usuarioId]);
+    }
+
+    public function setVerifiedForUser(int $usuarioId, bool $verified): void
+    {
+        $this->db->update('parceiro_perfis', ['verificado' => $verified ? 1 : 0], 'usuario_id = ?', [$usuarioId]);
+    }
+
+    public function setHighlightForUser(int $usuarioId, bool $highlight): void
+    {
+        $this->db->update('parceiro_perfis', ['destaque' => $highlight ? 1 : 0], 'usuario_id = ?', [$usuarioId]);
+    }
+
+    public function generateUniqueSlug(string $nomeFantasia, string $cidade, string $estado): string
+    {
+        $base = strtolower(trim($nomeFantasia . '-' . $cidade . '-' . $estado));
+        $base = iconv('UTF-8', 'ASCII//TRANSLIT', $base);
+        $base = preg_replace('/[^a-z0-9\s-]/', '', $base);
+        $base = preg_replace('/\s+/', '-', $base);
+        $base = preg_replace('/-+/', '-', $base);
+        $base = trim($base, '-');
+
+        if ($base === '') {
+            $base = 'parceiro';
+        }
+
+        $slug = $base;
+        $i = 2;
+        while ($this->db->fetchOne('SELECT id FROM parceiro_perfis WHERE slug = ? LIMIT 1', [$slug])) {
+            $slug = $base . '-' . $i;
+            $i++;
+        }
+
+        return $slug;
+    }
+}
