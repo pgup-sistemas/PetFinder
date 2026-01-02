@@ -101,6 +101,11 @@ include __DIR__ . '/../includes/header.php';
                     <div class="d-grid gap-2">
                         <a class="btn btn-outline-primary" href="<?php echo BASE_URL; ?>/parceiro/perfil">Editar perfil</a>
                         <a class="btn btn-outline-primary" href="<?php echo BASE_URL; ?>/parceiro/pagamento">Pagamento</a>
+                        <?php if ($etapaPagamentoOk): ?>
+                            <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#modalCancelarAssinatura">
+                                <i class="fas fa-times-circle me-1"></i>Cancelar Assinatura
+                            </button>
+                        <?php endif; ?>
                         <a class="btn btn-outline-secondary" href="<?php echo BASE_URL; ?>/ajuda">Ajuda</a>
                     </div>
                 </div>
@@ -111,6 +116,41 @@ include __DIR__ . '/../includes/header.php';
                     Você ainda não solicitou parceria. <a href="<?php echo BASE_URL; ?>/parceiros/inscricao">Clique aqui</a>.
                 </div>
             <?php endif; ?>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Cancelamento de Assinatura -->
+<div class="modal fade" id="modalCancelarAssinatura" tabindex="-1" aria-labelledby="modalCancelarAssinaturaLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalCancelarAssinaturaLabel">
+                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                    Cancelar Assinatura
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <strong>Atenção!</strong> Ao cancelar sua assinatura:
+                    <ul class="mb-0 mt-2">
+                        <li>Seu perfil será despublicado em até 24 horas</li>
+                        <li>Você perderá o destaque na listagem</li>
+                        <li>Não haverá mais cobranças futuras</li>
+                    </ul>
+                </div>
+                
+                <p>Tem certeza que deseja prosseguir com o cancelamento?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-arrow-left me-1"></i>Voltar
+                </button>
+                <a href="<?php echo BASE_URL; ?>/parceiro/cancelar" class="btn btn-danger">
+                    <i class="fas fa-times-circle me-1"></i>Sim, Cancelar Assinatura
+                </a>
+            </div>
         </div>
     </div>
 </div>

@@ -423,6 +423,41 @@ class PagamentoController
         }
     }
 
+    public function cancelarAssinaturaGateway(string $subscriptionId): bool
+    {
+        if (empty($subscriptionId)) {
+            throw new Exception('ID da assinatura não fornecido.');
+        }
+
+        try {
+            $api = $this->getApi();
+            
+            $params = ['id' => $subscriptionId];
+            $response = $api->cancelSubscription($params);
+            
+            // Verificar se o cancelamento foi bem-sucedido
+            if (isset($response['data'])) {
+                $status = strtolower((string)($response['data']['status'] ?? ''));
+                return in_array($status, ['canceled', 'cancelled', 'inactive']);
+            }
+            
+            return false;
+            
+        } catch (EfiException $e) {
+            error_log('[PagamentoController] EfiException (cancel subscription): ' . $e->code . ' - ' . $e->error . ' - ' . $e->errorDescription);
+            
+            // Se já estiver cancelada, considerar sucesso
+            if (in_array($e->code, [400, 404]) && str_contains(strtolower($e->error), 'cancel')) {
+                return true;
+            }
+            
+            throw new Exception('Erro ao cancelar assinatura no gateway.');
+        } catch (Exception $e) {
+            error_log('[PagamentoController] Erro ao cancelar assinatura: ' . $e->getMessage());
+            throw new Exception('Erro ao processar cancelamento no gateway.');
+        }
+    }
+
     public function sincronizarStatusParceiroPix(int $pagamentoId, string $txid)
     {
         $txid = trim($txid);
