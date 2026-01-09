@@ -23,7 +23,7 @@ if (!$anuncio) {
 $isOwner = isLoggedIn() && getUserId() == $anuncio['usuario_id'];
 if (!$isOwner && !isAdmin()) {
     setFlashMessage('Você não tem permissão para editar este anúncio.', MSG_ERROR);
-    redirect('/anuncio.php?id=' . $id);
+    redirect('/anuncio/' . $id . '/');
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (!empty($result['success'])) {
             setFlashMessage('Anúncio atualizado com sucesso!', MSG_SUCCESS);
-            redirect('/anuncio.php?id=' . $id);
+            redirect('/anuncio/' . $id . '/');
         }
 
         if (!empty($result['errors'])) {
@@ -53,7 +53,7 @@ include __DIR__ . '/../includes/header.php';
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="<?php echo BASE_URL; ?>">Início</a></li>
-            <li class="breadcrumb-item"><a href="<?php echo BASE_URL; ?>/anuncio.php?id=<?php echo $id; ?>">Detalhes</a></li>
+            <li class="breadcrumb-item"><a href="<?php echo BASE_URL; ?>/anuncio/<?php echo $id; ?>/">Detalhes</a></li>
             <li class="breadcrumb-item active" aria-current="page">Editar anúncio</li>
         </ol>
     </nav>
@@ -200,7 +200,7 @@ include __DIR__ . '/../includes/header.php';
                         </div>
 
                         <div class="d-flex gap-2 mt-4">
-                            <a class="btn btn-outline-secondary btn-lg" href="<?php echo BASE_URL; ?>/anuncio.php?id=<?php echo $id; ?>">Cancelar</a>
+                            <a class="btn btn-outline-secondary btn-lg" href="<?php echo BASE_URL; ?>/anuncio/<?php echo $id; ?>/">Cancelar</a>
                             <button type="submit" class="btn btn-primary btn-lg flex-grow-1">Salvar alterações</button>
                         </div>
                     </form>

@@ -113,7 +113,7 @@ include __DIR__ . '/../includes/header.php';
 
                         <div class="d-grid gap-2 mt-4">
                             <button type="submit" class="btn btn-primary"><i class="bi bi-search me-1"></i>Aplicar filtros</button>
-                            <a href="<?php echo BASE_URL; ?>/busca.php" class="btn btn-outline-secondary">Limpar filtros</a>
+                            <a href="<?php echo BASE_URL; ?>/busca/" class="btn btn-outline-secondary">Limpar filtros</a>
                         </div>
                     </form>
                 </div>
@@ -161,7 +161,7 @@ include __DIR__ . '/../includes/header.php';
                         <div class="row g-4">
                             <?php foreach ($anuncios as $anuncio): ?>
                                 <div class="col-md-6 col-lg-4">
-                                    <div class="card anuncio-card h-100" onclick="window.location='<?php echo BASE_URL; ?>/anuncio.php?id=<?php echo $anuncio['id']; ?>'">
+                                    <div class="card anuncio-card h-100" onclick="window.location='<?php echo BASE_URL; ?>/anuncio/<?php echo $anuncio['id']; ?>/'">
                                         <div class="position-relative">
                                             <?php if (!empty($anuncio['foto'])): ?>
                                                 <img src="<?php echo BASE_URL; ?>/uploads/anuncios/<?php echo sanitize($anuncio['foto']); ?>" class="card-img-top" alt="Foto do pet">
@@ -190,7 +190,7 @@ include __DIR__ . '/../includes/header.php';
                                         </div>
                                         <div class="card-footer bg-white border-0 d-flex justify-content-between align-items-center">
                                             <span class="text-muted small"><i class="bi bi-clock me-1"></i><?php echo timeAgo($anuncio['data_publicacao']); ?></span>
-                                            <a href="<?php echo BASE_URL; ?>/anuncio.php?id=<?php echo $anuncio['id']; ?>" class="btn btn-sm btn-outline-primary">Ver detalhes</a>
+                                            <a href="<?php echo BASE_URL; ?>/anuncio/<?php echo $anuncio['id']; ?>/" class="btn btn-sm btn-outline-primary">Ver detalhes</a>
                                         </div>
                                     </div>
                                 </div>
@@ -321,7 +321,7 @@ function initBuscaMap() {
     const bounds = [];
 
     points.forEach(function (p) {
-        const url = <?php echo json_encode(BASE_URL . '/anuncio.php?id='); ?> + p.id;
+        const url = <?php echo json_encode(BASE_URL . '/anuncio/'); ?> + p.id + '/';
         const titulo = String(p.nome || 'Pet');
         const local = [p.bairro, p.cidade].filter(Boolean).join(' - ');
         const fotoHtml = p.foto

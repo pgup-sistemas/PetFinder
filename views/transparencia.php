@@ -31,7 +31,7 @@ include __DIR__ . '/../includes/header.php';
                     <h1 class="h3 fw-bold mb-1">📊 Transparência</h1>
                     <p class="text-muted mb-0">Relatório público de custos, metas e andamento do PetFinder.</p>
                 </div>
-                <a href="<?php echo BASE_URL; ?>/doar.php" class="btn btn-success">
+                <a href="<?php echo BASE_URL; ?>/doar/" class="btn btn-success">
                     💚 Fazer uma doação
                 </a>
             </div>

@@ -17,7 +17,7 @@ include __DIR__ . '/../includes/header.php';
             <h1 class="h3 fw-bold mb-2">Meus Favoritos</h1>
             <p class="text-muted mb-0">Seus anúncios salvos para acompanhar de perto.</p>
         </div>
-        <a class="btn btn-outline-primary mt-3 mt-md-0" href="<?php echo BASE_URL; ?>/busca.php">
+        <a class="btn btn-outline-primary mt-3 mt-md-0" href="<?php echo BASE_URL; ?>/busca/">
             <i class="bi bi-search me-1"></i>Buscar novos anúncios
         </a>
     </div>
@@ -30,7 +30,7 @@ include __DIR__ . '/../includes/header.php';
         <div class="row g-4">
             <?php foreach ($favoritos as $favorito): ?>
                 <div class="col-md-6 col-lg-4">
-                    <div class="card anuncio-card h-100" onclick="window.location='<?php echo BASE_URL; ?>/anuncio.php?id=<?php echo $favorito['id']; ?>'">
+                    <div class="card anuncio-card h-100" onclick="window.location='<?php echo BASE_URL; ?>/anuncio/<?php echo $favorito['id']; ?>/'">
                         <div class="position-relative">
                             <?php if (!empty($favorito['foto'])): ?>
                                 <img src="<?php echo BASE_URL; ?>/uploads/anuncios/<?php echo sanitize($favorito['foto']); ?>" class="card-img-top" alt="Foto do pet">

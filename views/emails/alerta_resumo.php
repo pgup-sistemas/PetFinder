@@ -92,7 +92,7 @@
                             Publicado em <?php echo formatDateTimeBR($anuncio['data_publicacao']); ?>
                         </p>
                         <p style="margin-top: 14px;">
-                            <a href="<?php echo $baseUrl . '/anuncio.php?id=' . (int) $anuncio['id']; ?>" style="display: inline-block; padding: 10px 18px; background: #667eea; color: #fff; border-radius: 999px; text-decoration: none; font-size: 13px;">Ver anúncio completo</a>
+                            <a href="<?php echo $baseUrl . '/anuncio/' . (int) $anuncio['id'] . '/'; ?>" style="display: inline-block; padding: 10px 18px; background: #667eea; color: #fff; border-radius: 999px; text-decoration: none; font-size: 13px;">Ver anúncio completo</a>
                         </p>
                     </div>
                 </div>

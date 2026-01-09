@@ -82,7 +82,7 @@ include __DIR__ . '/../includes/header.php';
                         </button>
 
                         <div class="text-center">
-                            <a href="<?php echo BASE_URL; ?>/login.php" class="text-decoration-none">
+                            <a href="<?php echo BASE_URL; ?>/login/" class="text-decoration-none">
                                 <i class="bi bi-arrow-left"></i> Voltar ao Login
                             </a>
                         </div>

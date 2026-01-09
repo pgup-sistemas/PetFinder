@@ -1,14 +1,11 @@
 <?php
 
-use Efi\EfiPay;
-use Efi\Exception\EfiException;
-
 class PagamentoController
 {
-    public function getApi(): EfiPay
+    public function getApi(): Efi
     {
-        if (!class_exists(EfiPay::class)) {
-            throw new Exception('SDK Efí não instalada. Execute "composer install" na raiz do projeto.');
+        if (!class_exists(Efi::class)) {
+            throw new Exception('SDK Efí simplificada não encontrada em includes/efi.php.');
         }
 
         $clientId = (string)EFI_CLIENT_ID;
@@ -19,23 +16,15 @@ class PagamentoController
             throw new Exception('Credenciais da Efí não configuradas (EFI_CLIENT_ID/EFI_CLIENT_SECRET).');
         }
 
-        if ($certificate === '' || !file_exists($certificate)) {
-            throw new Exception('Certificado da Efí não encontrado em EFI_CERTIFICATE_PATH.');
-        }
-
         $options = [
-            'clientId' => $clientId,
-            'clientSecret' => $clientSecret,
-            'certificate' => realpath($certificate),
-            'pwdCertificate' => (string)EFI_CERTIFICATE_PASSWORD,
+            'client_id' => $clientId,
+            'client_secret' => $clientSecret,
+            'certificate' => $certificate,
             'sandbox' => (bool)EFI_SANDBOX,
-            'debug' => false,
-            'cache' => true,
-            'timeout' => 30,
-            'responseHeaders' => false,
+            'base_url' => (string)EFI_BASE_URL,
         ];
 
-        return new EfiPay($options);
+        return new Efi($options);
     }
 
     public function criarLinkPagamentoDoacao(int $doacaoId, float $valor, string $gatewayTipo)

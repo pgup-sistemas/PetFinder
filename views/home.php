@@ -148,7 +148,7 @@ include __DIR__ . '/../includes/header.php';
         <div class="row g-4">
             <?php foreach ($anunciosRecentes as $anuncio): ?>
                 <div class="col-lg-3 col-md-4 col-sm-6">
-                    <div class="anuncio-card" onclick="window.location='<?php echo BASE_URL; ?>/anuncio.php?id=<?php echo $anuncio['id']; ?>'">
+                    <div class="anuncio-card" onclick="window.location='<?php echo BASE_URL; ?>/anuncio/<?php echo $anuncio['id']; ?>/'">
                         <div class="anuncio-image">
                             <?php if ($anuncio['foto']): ?>
                                 <img src="<?php echo BASE_URL; ?>/uploads/anuncios/<?php echo $anuncio['foto']; ?>" 

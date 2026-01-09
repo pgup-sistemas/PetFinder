@@ -135,11 +135,11 @@ include __DIR__ . '/../includes/header.php';
                                     Lembrar-me
                                 </label>
                             </div>
-                            <a href="<?php echo BASE_URL; ?>/reenviar-confirmacao.php" 
+                            <a href="<?php echo BASE_URL; ?>/reenviar-confirmacao/" 
                                class="small text-decoration-none">
                                 Não recebeu o e-mail? Reenviar
                             </a>
-                            <a href="<?php echo BASE_URL; ?>/recuperar-senha.php" 
+                            <a href="<?php echo BASE_URL; ?>/recuperar-senha/" 
                                class="small text-decoration-none">
                                 Esqueci minha senha
                             </a>
@@ -156,7 +156,7 @@ include __DIR__ . '/../includes/header.php';
                         </div>
                         
                         <!-- Botão Cadastro -->
-                        <a href="<?php echo BASE_URL; ?>/cadastro.php" 
+                        <a href="<?php echo BASE_URL; ?>/cadastro/" 
                            class="btn btn-outline-success btn-lg w-100">
                             <i class="bi bi-person-plus"></i> Criar Nova Conta
                         </a>

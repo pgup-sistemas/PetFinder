@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $resultado = $usuarioController->registrar($_POST);
 
         if (!empty($resultado['success'])) {
-            redirect('/login.php?registered=1');
+            redirect('/login/?registered=1');
         }
 
         if (!empty($resultado['errors'])) {
@@ -107,7 +107,7 @@ include __DIR__ . '/../includes/header.php';
                         </button>
 
                         <div class="text-center mt-4">
-                            <p class="text-muted mb-0">Já tem uma conta? <a href="<?php echo BASE_URL; ?>/login.php" class="text-decoration-none">Entrar agora</a></p>
+                            <p class="text-muted mb-0">Já tem uma conta? <a href="<?php echo BASE_URL; ?>/login/" class="text-decoration-none">Entrar agora</a></p>
                         </div>
                     </form>
                 </div>

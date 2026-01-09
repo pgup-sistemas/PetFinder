@@ -1,0 +1,14 @@
+# PetFinder - Proteção do diretório de uploads
+# Impedir execução de arquivos PHP
+
+# Negar acesso a todos os arquivos
+<FilesMatch "\.ph(p[3-5]?|tml|ar)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Apenas permitir imagens
+<FilesMatch "\.(jpg|jpeg|png|gif|webp)$">
+    Order allow,deny
+    Allow from all
+</FilesMatch>

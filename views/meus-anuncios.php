@@ -20,24 +20,24 @@ include __DIR__ . '/../includes/header.php';
 <div class="container py-5">
     <div class="d-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 fw-bold mb-0">Meus Anúncios</h1>
-        <a class="btn btn-primary" href="<?php echo BASE_URL; ?>/novo-anuncio.php">
+        <a class="btn btn-primary" href="<?php echo BASE_URL; ?>/novo-anuncio/">
             <i class="bi bi-plus-lg"></i> Publicar
         </a>
     </div>
 
     <ul class="nav nav-tabs mb-4">
         <li class="nav-item">
-            <a class="nav-link <?php echo $statusSelecionado === STATUS_ATIVO ? 'active' : ''; ?>" href="<?php echo BASE_URL; ?>/meus-anuncios.php?status=<?php echo urlencode(STATUS_ATIVO); ?>">
+            <a class="nav-link <?php echo $statusSelecionado === STATUS_ATIVO ? 'active' : ''; ?>" href="<?php echo BASE_URL; ?>/meus-anuncios/?status=<?php echo urlencode(STATUS_ATIVO); ?>">
                 Ativos
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link <?php echo $statusSelecionado === STATUS_RESOLVIDO ? 'active' : ''; ?>" href="<?php echo BASE_URL; ?>/meus-anuncios.php?status=<?php echo urlencode(STATUS_RESOLVIDO); ?>">
+            <a class="nav-link <?php echo $statusSelecionado === STATUS_RESOLVIDO ? 'active' : ''; ?>" href="<?php echo BASE_URL; ?>/meus-anuncios/?status=<?php echo urlencode(STATUS_RESOLVIDO); ?>">
                 Resolvidos
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link <?php echo $statusSelecionado === STATUS_EXPIRADO ? 'active' : ''; ?>" href="<?php echo BASE_URL; ?>/meus-anuncios.php?status=<?php echo urlencode(STATUS_EXPIRADO); ?>">
+            <a class="nav-link <?php echo $statusSelecionado === STATUS_EXPIRADO ? 'active' : ''; ?>" href="<?php echo BASE_URL; ?>/meus-anuncios/?status=<?php echo urlencode(STATUS_EXPIRADO); ?>">
                 Expirados
             </a>
         </li>
@@ -51,7 +51,7 @@ include __DIR__ . '/../includes/header.php';
                 Você ainda não tem anúncios expirados.
             <?php else: ?>
                 Você ainda não publicou nenhum anúncio.
-                <a href="<?php echo BASE_URL; ?>/novo-anuncio.php" class="alert-link">Publicar agora</a>
+                <a href="<?php echo BASE_URL; ?>/novo-anuncio/" class="alert-link">Publicar agora</a>
             <?php endif; ?>
         </div>
     <?php else: ?>
@@ -89,10 +89,10 @@ include __DIR__ . '/../includes/header.php';
                             </div>
 
                             <div class="mt-3 d-flex gap-2">
-                                <a class="btn btn-outline-primary btn-sm flex-grow-1" href="<?php echo BASE_URL; ?>/anuncio.php?id=<?php echo (int)$anuncio['id']; ?>">
+                                <a class="btn btn-outline-primary btn-sm flex-grow-1" href="<?php echo BASE_URL; ?>/anuncio/<?php echo (int)$anuncio['id']; ?>/">
                                     Ver
                                 </a>
-                                <a class="btn btn-primary btn-sm flex-grow-1" href="<?php echo BASE_URL; ?>/editar-anuncio.php?id=<?php echo (int)$anuncio['id']; ?>">
+                                <a class="btn btn-primary btn-sm flex-grow-1" href="<?php echo BASE_URL; ?>/editar-anuncio/<?php echo (int)$anuncio['id']; ?>/">
                                     Editar
                                 </a>
                                 <?php if (($anuncio['status'] ?? '') === STATUS_ATIVO): ?>

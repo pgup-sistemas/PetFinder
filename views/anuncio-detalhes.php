@@ -24,7 +24,7 @@ $isOwner = isLoggedIn() && getUserId() == $anuncio['usuario_id'];
 $favoritoController = new FavoritoController();
 $isFavorited = $favoritoController->isFavorited($anuncio['id']);
 
-$shareUrl = rtrim((string)BASE_URL, '/') . '/anuncio.php?id=' . (int)$anuncio['id'];
+$shareUrl = rtrim((string)BASE_URL, '/') . '/anuncio/' . (int)$anuncio['id'] . '/';
 $shareTitle = ($anuncio['nome_pet'] ?: ('Pet ' . ucfirst($anuncio['especie'])));
 $shareDescription = trim((string)($anuncio['descricao'] ?? ''));
 if ($shareDescription === '') {
@@ -109,14 +109,14 @@ include __DIR__ . '/../includes/header.php';
                                 <form method="POST" action="<?php echo BASE_URL; ?>/favorito_toggle.php" class="d-inline">
                                     <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
                                     <input type="hidden" name="anuncio_id" value="<?php echo $anuncio['id']; ?>">
-                                    <input type="hidden" name="return_to" value="<?php echo '/anuncio.php?id=' . $anuncio['id']; ?>">
+                                    <input type="hidden" name="return_to" value="<?php echo '/anuncio/' . (int)$anuncio['id'] . '/'; ?>">
                                     <button type="submit" class="btn btn-sm <?php echo $isFavorited ? 'btn-warning' : 'btn-outline-warning'; ?>">
                                         <i class="bi <?php echo $isFavorited ? 'bi-star-fill' : 'bi-star'; ?> me-1"></i>
                                         <?php echo $isFavorited ? 'Remover dos Favoritos' : 'Salvar nos Favoritos'; ?>
                                     </button>
                                 </form>
                             <?php else: ?>
-                                <a href="<?php echo BASE_URL; ?>/login.php?redirect=/anuncio.php?id=<?php echo $anuncio['id']; ?>" class="btn btn-sm btn-outline-warning">
+                                <a href="<?php echo BASE_URL; ?>/login/?redirect=/anuncio/<?php echo $anuncio['id']; ?>/" class="btn btn-sm btn-outline-warning">
                                     <i class="bi bi-star me-1"></i>Entre para favoritar
                                 </a>
                             <?php endif; ?>
@@ -127,7 +127,7 @@ include __DIR__ . '/../includes/header.php';
                         <form method="POST" action="<?php echo BASE_URL; ?>/marcar-resolvido.php" class="mb-4" onsubmit="return confirm('Marcar este anúncio como resolvido?');">
                             <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
                             <input type="hidden" name="anuncio_id" value="<?php echo (int)$anuncio['id']; ?>">
-                            <input type="hidden" name="return_to" value="<?php echo '/anuncio.php?id=' . (int)$anuncio['id']; ?>">
+                            <input type="hidden" name="return_to" value="<?php echo '/anuncio/' . (int)$anuncio['id'] . '/'; ?>">
                             <button type="submit" class="btn btn-outline-success">
                                 <i class="bi bi-check2-circle me-1"></i> Marcar como resolvido
                             </button>
@@ -291,7 +291,7 @@ include __DIR__ . '/../includes/header.php';
                     <?php if ($isOwner): ?>
                         <hr>
                         <div class="d-grid gap-2">
-                            <a href="<?php echo BASE_URL; ?>/editar-anuncio.php?id=<?php echo $anuncio['id']; ?>" class="btn btn-outline-primary"><i class="bi bi-pencil me-1"></i>Editar anúncio</a>
+                            <a href="<?php echo BASE_URL; ?>/editar-anuncio/<?php echo $anuncio['id']; ?>/" class="btn btn-outline-primary"><i class="bi bi-pencil me-1"></i>Editar anúncio</a>
                         </div>
                     <?php endif; ?>
                 </div>

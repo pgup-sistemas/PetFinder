@@ -79,7 +79,7 @@ include __DIR__ . '/../includes/header.php';
                             </div>
                         <?php endif; ?>
                         <div class="d-grid">
-                            <a class="btn btn-primary btn-lg" href="<?php echo BASE_URL; ?>/login.php">Ir para Login</a>
+                            <a class="btn btn-primary btn-lg" href="<?php echo BASE_URL; ?>/login/">Ir para Login</a>
                         </div>
                     <?php else: ?>
                         <form method="POST" action="">
@@ -102,7 +102,7 @@ include __DIR__ . '/../includes/header.php';
                             </button>
 
                             <div class="text-center mt-3">
-                                <a href="<?php echo BASE_URL; ?>/login.php" class="text-decoration-none">
+                                <a href="<?php echo BASE_URL; ?>/login/" class="text-decoration-none">
                                     <i class="bi bi-arrow-left"></i> Voltar ao Login
                                 </a>
                             </div>

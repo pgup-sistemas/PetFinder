@@ -165,7 +165,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 unset($_SESSION['anuncio_temp']);
                 unset($_SESSION['anuncio_temp_fotos']);
                 setFlashMessage('Anúncio publicado com sucesso!', MSG_SUCCESS);
-                redirect('/anuncio.php?id=' . $result['id']);
+                redirect('/anuncio/' . $result['id'] . '/');
             } else {
                 $errors = $result['errors'] ?? ['Não foi possível publicar o anúncio. Tente novamente.'];
 
